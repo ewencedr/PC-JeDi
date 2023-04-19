@@ -1,6 +1,6 @@
 # output dir will be created by hydra
-data_dir: null
-output_dir: null
+data_dir: /srv/beegfs/scratch/groups/rodem/anomalous_jets/virtual_data
+output_dir: /srv/beegfs/scratch/users/s/senguptd/jet_diffusion
 
 # Interpolated
 root_dir: ${oc.env:PROJECT_ROOT}

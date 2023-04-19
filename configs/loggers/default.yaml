@@ -1,6 +1,6 @@
 wandb:
   _target_: pytorch_lightning.loggers.wandb.WandbLogger
-  entity: null
+  entity: jet-diffusion
   offline: False
   id: null
   log_model: False

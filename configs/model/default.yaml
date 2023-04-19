@@ -13,7 +13,7 @@ cosine_config:
   frequency_scaling: exponential
 
 diff_config:
-  max_sr: 1.0
+  max_sr: 0.999
   min_sr: 0.02
 
 normaliser_config:
