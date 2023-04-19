@@ -149,12 +149,6 @@ class EpicDiffusionGenerator(pl.LightningModule):
             mle_loss = mle_weights * simple_loss
         else:
             mle_loss = T.zeros_like(simple_loss)
-        if T.isnan(simple_loss).any():
-            print("Simple loss is nan")
-            print("EPOCH: ", self.tainer.current_epoch)
-        if T.isnan(mle_loss).any():
-            print("MLE loss is nan")
-            print("EPOCH: ", self.tainer.current_epoch)
 
         return simple_loss.mean(), mle_loss.mean()
 
