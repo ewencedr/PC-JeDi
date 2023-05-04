@@ -20,25 +20,25 @@ from src.torch_utils import get_loss_fn, to_np
 
 class EpicDiffusionGenerator(pl.LightningModule):
     """A generative model which uses the diffusion process on a point cloud.
-       Differs from model defined in models/pc_jedi.py in that it uses EPIC layers,
-       instead of transformers."""
-    
+    Differs from model defined in models/pc_jedi.py in that it uses EPIC layers,
+    instead of transformers."""
+
     def __init__(
-            self,
-            *,
-            pc_dim: int,
-            ctxt_dim: int,
-            n_nodes: int,
-            epic_jedi_config: Mapping,
-            cosine_config: Mapping,
-            diff_config: Mapping,
-            normaliser_config: Mapping,
-            optimizer: partial,
-            loss_name: str = "mse",
-            mle_loss_weight: float = 0.0,
-            ema_sync: float = 0.999,
-            sampler_name: str = "em",
-            sampler_steps: int = 100,
+        self,
+        *,
+        pc_dim: int,
+        ctxt_dim: int,
+        n_nodes: int,
+        epic_jedi_config: Mapping,
+        cosine_config: Mapping,
+        diff_config: Mapping,
+        normaliser_config: Mapping,
+        optimizer: partial,
+        loss_name: str = "mse",
+        mle_loss_weight: float = 0.0,
+        ema_sync: float = 0.999,
+        sampler_name: str = "em",
+        sampler_steps: int = 100,
     ) -> None:
         """
         Args:
@@ -77,7 +77,7 @@ class EpicDiffusionGenerator(pl.LightningModule):
         self.normaliser = IterativeNormLayer((pc_dim,), **normaliser_config)
         if self.ctxt_dim:
             self.ctxt_normaliser = IterativeNormLayer((ctxt_dim,), **normaliser_config)
-        
+
         net_cond_dim = cosine_config["outp_dim"] + ctxt_dim
         self.net = EPiC_Encoder(**epic_jedi_config, cond_dim=net_cond_dim)
 
@@ -90,13 +90,13 @@ class EpicDiffusionGenerator(pl.LightningModule):
 
         # Record of the outputs of the validation step
         self.val_outs = []
-        
+
     def forward(
-            self,
-            noisy_data: T.Tensor,
-            diffusion_times: T.Tensor,
-            mask: T.BoolTensor,
-            ctxt: Optional[T.Tensor] = None,
+        self,
+        noisy_data: T.Tensor,
+        diffusion_times: T.Tensor,
+        mask: T.BoolTensor,
+        ctxt: Optional[T.Tensor] = None,
     ) -> T.Tensor:
         """Pass through the model and get an estimate of the noise added to the
         input."""
@@ -105,14 +105,14 @@ class EpicDiffusionGenerator(pl.LightningModule):
             network = self.net
         else:
             network = self.ema_net
-        
+
         # Encode the times and combine with existing context info
         context = self.time_encoder(diffusion_times)
         if self.ctxt_dim:
             context = T.cat([context, ctxt], dim=-1)
-        
+
         x_local, x_global = network(noisy_data, context, mask)
-        
+
         return x_local
 
     def _shared_step(self, sample: tuple) -> Tuple[T.Tensor, T.Tensor]:
@@ -304,6 +304,35 @@ class EpicDiffusionGenerator(pl.LightningModule):
         # Return the normalisation of the generated point cloud
         return self.normaliser.reverse(outputs, mask=mask)
 
+    def predict_step(self, sample: tuple, _batch_idx: int) -> None:
+        """Single test step which fully generates a batch of jets using the
+        context and mask found in the test set.
+
+        All generated jets must be of the format: eta, phi, pt
+        """
+
+        # Unpack the sample tuple (dont need constituents)
+        _, mask, ctxt = sample
+
+        # Generate the data and move to numpy
+        gen_nodes = to_np(
+            self.full_generation(
+                sampler=self.sampler_name,
+                steps=self.sampler_steps,
+                mask=mask,
+                ctxt=ctxt,
+            )
+        )
+
+        # Undo the log_squash preprocessing
+        if self.trainer.datamodule.test_set.log_squash_pt:
+            gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1])
+        else:
+            gen_nodes[..., -1] *= ctxt[..., 0:1]
+
+        # Return in a dict for standard combining later
+        return {"generated": gen_nodes}
+
     def configure_optimizers(self) -> dict:
         """Configure the optimisers and learning rate sheduler for this
         model."""
@@ -321,4 +350,3 @@ class EpicDiffusionGenerator(pl.LightningModule):
                 "frequency": 1,
             },
         }
-   

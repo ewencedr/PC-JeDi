@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+  - hydra: default.yaml
+  - paths: default.yaml
+  - _self_
+
+sampler_steps:
+  - 100
+  - 200
+  - 50
+  - 20
+  # - 40
+  # - 60
+  # - 80
+  # - 100
+
+sampler_name:
+  - ddim
+  - em
+  - euler
+
+load: best
+
+project_name: pc_jedi_30_check
+network_name: 2023-04-28_15-57-51-470943
+

@@ -2,14 +2,17 @@ from typing import Mapping, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 # import torch.nn.utils.weight_norm as weight_norm
 
 from src.models.modules import DenseNetwork
+
 # from weight_std import Linear_wstd  ## !! DOESN'T WORK PROPERLY YET !! ##
 
+
 class weight_norm(nn.Module):
-    append_g = '_g'
-    append_v = '_v'
+    append_g = "_g"
+    append_v = "_v"
 
     def __init__(self, module, weights):
         super(weight_norm, self).__init__()
@@ -23,7 +26,7 @@ class weight_norm(nn.Module):
 
             # construct g,v such that w = g/||v|| * v
             g = torch.norm(w)
-            v = w/g.expand_as(w)
+            v = w / g.expand_as(w)
             g = nn.Parameter(g.data)
             v = nn.Parameter(v.data)
             name_g = name_w + self.append_g
@@ -42,7 +45,7 @@ class weight_norm(nn.Module):
             name_v = name_w + self.append_v
             g = getattr(self.module, name_g)
             v = getattr(self.module, name_v)
-            w = v*(g/torch.norm(v)).expand_as(v)
+            w = v * (g / torch.norm(v)).expand_as(v)
             setattr(self.module, name_w, w)
 
     def forward(self, *args):
@@ -53,33 +56,42 @@ class weight_norm(nn.Module):
 class EPiC_layer(nn.Module):
     def __init__(self, local_in_dim, hid_dim, latent_dim):
         super(EPiC_layer, self).__init__()
-        
-        fc_global1 = nn.Linear(int(2*hid_dim)+latent_dim, hid_dim)
-        self.fc_global1 = weight_norm(fc_global1, ['weight'])
-        
+
+        fc_global1 = nn.Linear(int(2 * hid_dim) + latent_dim, hid_dim)
+        self.fc_global1 = weight_norm(fc_global1, ["weight"])
+
         fc_global2 = nn.Linear(hid_dim, latent_dim)
-        self.fc_global2 = weight_norm(fc_global2, ['weight'])
-        
-        fc_local1 = nn.Linear(local_in_dim+latent_dim, hid_dim)
-        self.fc_local1 = weight_norm(fc_local1, ['weight'])
-        
+        self.fc_global2 = weight_norm(fc_global2, ["weight"])
+
+        fc_local1 = nn.Linear(local_in_dim + latent_dim, hid_dim)
+        self.fc_local1 = weight_norm(fc_local1, ["weight"])
+
         fc_local2 = nn.Linear(hid_dim, hid_dim)
-        self.fc_local2 = weight_norm(fc_local2, ['weight'])
+        self.fc_local2 = weight_norm(fc_local2, ["weight"])
 
-
-    def forward(self, x_global, x_local):   # shapes: x_global[b,latent], x_local[b,n,latent_local]
+    def forward(
+        self, x_global, x_local
+    ):  # shapes: x_global[b,latent], x_local[b,n,latent_local]
         batch_size, n_points, latent_local = x_local.size()
         latent_global = x_global.size(1)
 
         x_pooled_mean = x_local.mean(1, keepdim=False)
         x_pooled_sum = x_local.sum(1, keepdim=False)
         x_pooledCATglobal = torch.cat([x_pooled_mean, x_pooled_sum, x_global], 1)
-        x_global1 = F.leaky_relu(self.fc_global1(x_pooledCATglobal))  # new intermediate step
-        x_global = F.leaky_relu(self.fc_global2(x_global1) + x_global) # with residual connection before AF
+        x_global1 = F.leaky_relu(
+            self.fc_global1(x_pooledCATglobal)
+        )  # new intermediate step
+        x_global = F.leaky_relu(
+            self.fc_global2(x_global1) + x_global
+        )  # with residual connection before AF
 
-        x_global2local = x_global.view(-1,1,latent_global).repeat(1,n_points,1) # first add dimension, than expand it
+        x_global2local = x_global.view(-1, 1, latent_global).repeat(
+            1, n_points, 1
+        )  # first add dimension, than expand it
         x_localCATglobal = torch.cat([x_local, x_global2local], 2)
-        x_local1 = F.leaky_relu(self.fc_local1(x_localCATglobal))  # with residual connection before AF
+        x_local1 = F.leaky_relu(
+            self.fc_local1(x_localCATglobal)
+        )  # with residual connection before AF
         x_local = F.leaky_relu(self.fc_local2(x_local1) + x_local)
 
         return x_global, x_local
@@ -115,15 +127,14 @@ class EPiC_layer_mask(nn.Module):
         # self.fc_local1 = weight_norm(nn.Linear(local_in_dim + latent_dim, hid_dim))
         # self.fc_local2 = weight_norm(nn.Linear(hid_dim, hid_dim))
         fc_global1 = nn.Linear(int(2 * hid_dim) + latent_dim, hid_dim)
-        self.fc_global1 = weight_norm(fc_global1, ['weight'])        
+        self.fc_global1 = weight_norm(fc_global1, ["weight"])
         fc_global2 = nn.Linear(hid_dim, latent_dim)
-        self.fc_global2 = weight_norm(fc_global2, ['weight'])        
+        self.fc_global2 = weight_norm(fc_global2, ["weight"])
         fc_local1 = nn.Linear(local_in_dim + latent_dim, hid_dim)
-        self.fc_local1 = weight_norm(fc_local1, ['weight'])
+        self.fc_local1 = weight_norm(fc_local1, ["weight"])
         fc_local2 = nn.Linear(hid_dim, hid_dim)
-        self.fc_local2 = weight_norm(fc_local2, ['weight'])
+        self.fc_local2 = weight_norm(fc_local2, ["weight"])
 
-        
         self.sum_scale = sum_scale
         self.dropout = nn.Dropout(dropout)
 
@@ -175,6 +186,7 @@ class EPiC_layer_mask(nn.Module):
 
         return x_global, x_local
 
+
 # EPiC layer
 class EPiC_layer_cond_mask(nn.Module):
     def __init__(self, local_in_dim, hid_dim, latent_dim, cond_feats=1, sum_scale=1e-2):
@@ -186,16 +198,15 @@ class EPiC_layer_cond_mask(nn.Module):
         # self.fc_local1 = weight_norm(nn.Linear(local_in_dim + latent_dim, hid_dim))
         # self.fc_local2 = weight_norm(nn.Linear(hid_dim, hid_dim))
         fc_global1 = nn.Linear(int(2 * hid_dim) + latent_dim + cond_feats, hid_dim)
-        self.fc_global1 = weight_norm(fc_global1, ['weight'])  
+        self.fc_global1 = weight_norm(fc_global1, ["weight"])
         fc_global2 = nn.Linear(hid_dim, latent_dim)
-        self.fc_global2 = weight_norm(fc_global2, ['weight'])      
+        self.fc_global2 = weight_norm(fc_global2, ["weight"])
         fc_local1 = nn.Linear(local_in_dim + latent_dim, hid_dim)
-        self.fc_local1 = weight_norm(fc_local1, ['weight'])
+        self.fc_local1 = weight_norm(fc_local1, ["weight"])
         fc_local2 = nn.Linear(hid_dim, hid_dim)
-        self.fc_local2 = weight_norm(fc_local2, ['weight'])
+        self.fc_local2 = weight_norm(fc_local2, ["weight"])
 
         self.sum_scale = sum_scale
-
 
     def forward(self, x_global, x_local, cond_tensor, mask):  # shapes:
         # - x_global[b,latent]
@@ -232,6 +243,7 @@ class EPiC_layer_cond_mask(nn.Module):
 
 #### MASKED EPIC SQUASH MODEL ####
 
+
 # inspired by FFJORD https://github.com/rtqichen/ffjord/blob/master/lib/layers/diffeq_layers/basic.py
 class ConcatSquashLinear(nn.Module):
     def __init__(self, dim_in, dim_out, dim_ctx):
@@ -245,7 +257,8 @@ class ConcatSquashLinear(nn.Module):
         bias = self._hyper_bias(ctx)
         ret = self._layer(x) * gate + bias
         return ret
-    
+
+
 class ConcatSquashLinear_2inputs(nn.Module):
     def __init__(self, dim_in, dim_out, dim_ctx1, dim_ctx2):
         super().__init__()
@@ -263,6 +276,7 @@ class ConcatSquashLinear_2inputs(nn.Module):
         ret = self._layer(x) * gate1 * gate2 + bias1 + bias2
         return ret
 
+
 class EPiC_ConcatSquashLinear(nn.Module):
     def __init__(self, dim_in, dim_out, dim_ctx, sum_scale=1e-4):
         super().__init__()
@@ -277,10 +291,11 @@ class EPiC_ConcatSquashLinear(nn.Module):
         x_mean = x_sum / mask.sum(1, keepdim=True)  # B,1,d
         x_sum = x_sum * self.sum_scale
 
-        ctx = self.act(self._layer_ctx(x_sum, x_mean, ctx)) # B,1,c
-        ret = self.act(self.layer(ctx, x)) # B,N,d
+        ctx = self.act(self._layer_ctx(x_sum, x_mean, ctx))  # B,1,c
+        ret = self.act(self.layer(ctx, x))  # B,N,d
         return ctx, ret
-    
+
+
 class EPiC_ConcatSquashLinear_noAct(nn.Module):
     def __init__(self, dim_in, dim_out, dim_ctx, sum_scale=1e-4):
         super().__init__()
@@ -294,21 +309,21 @@ class EPiC_ConcatSquashLinear_noAct(nn.Module):
         x_mean = x_sum / mask.sum(1, keepdim=True)  # B,1,d
         x_sum = x_sum * self.sum_scale
 
-        ctx = self._layer_ctx(x_sum, x_mean, ctx) # B,1,c
-        ret = self.layer(ctx, x) # B,N,d
+        ctx = self._layer_ctx(x_sum, x_mean, ctx)  # B,1,c
+        ret = self.layer(ctx, x)  # B,N,d
         return ctx, ret
 
-class EPiC_Encoder(nn.Module):
 
+class EPiC_Encoder(nn.Module):
     def __init__(
-            self,
-            hid_d: int,
-            feats: int,
-            equiv_layers: int,
-            latent: int,
-            cond_feats: int = 0,
-            sum_scale: float = 1e-2,
-            cond_dim: int = None,
+        self,
+        hid_d: int,
+        feats: int,
+        equiv_layers: int,
+        latent: int,
+        cond_feats: int = 0,
+        sum_scale: float = 1e-2,
+        cond_dim: int = None,
     ) -> None:
         super().__init__()
 
@@ -320,19 +335,19 @@ class EPiC_Encoder(nn.Module):
         self.sum_scale = sum_scale
 
         fc_l1 = nn.Linear(self.feats, self.hid_d)
-        self.fc_l1 = weight_norm(fc_l1, ['weight'])
+        self.fc_l1 = weight_norm(fc_l1, ["weight"])
 
         fc_l2 = nn.Linear(self.hid_d, self.hid_d)
-        self.fc_l2 = weight_norm(fc_l2, ['weight'])
+        self.fc_l2 = weight_norm(fc_l2, ["weight"])
 
         fc_g1 = nn.Linear(int(2 * self.hid_d + self.cond_feats), self.hid_d)
-        self.fc_g1 = weight_norm(fc_g1, ['weight'])
+        self.fc_g1 = weight_norm(fc_g1, ["weight"])
 
         fc_g2 = nn.Linear(self.hid_d, self.latent)
-        self.fc_g2 = weight_norm(fc_g2, ['weight'])
+        self.fc_g2 = weight_norm(fc_g2, ["weight"])
 
         output_dense = nn.Linear(self.hid_d, self.feats)
-        self.output_dense =  weight_norm(output_dense, ['weight'])
+        self.output_dense = weight_norm(output_dense, ["weight"])
 
         self.nn_list = nn.ModuleList()
 
@@ -357,7 +372,7 @@ class EPiC_Encoder(nn.Module):
                         sum_scale=self.sum_scale,
                     )
                 )
-        
+
         # self.fc_g3 = weight_norm(
         #     nn.Linear(int(2 * self.hid_d + self.latent + self.cond_feats), self.hid_d)
         # )
@@ -391,7 +406,9 @@ class EPiC_Encoder(nn.Module):
 
         x_global = torch.cat([x_mean, x_sum], 1)
         x_global = F.leaky_relu(self.dropout(self.fc_g1(x_global)))
-        x_global = F.leaky_relu(self.dropout(self.fc_g2(x_global)))  # projecting down to latent size
+        x_global = F.leaky_relu(
+            self.dropout(self.fc_g2(x_global))
+        )  # projecting down to latent size
 
         # equivariant connections
         x_global_in = x_global.clone()
@@ -400,7 +417,7 @@ class EPiC_Encoder(nn.Module):
             # contains residual connection
             x_global, x_local = self.nn_list[i](x_global, x_local, mask)
             x_global, x_local = x_global + x_global_in, x_local + x_local_in
-        
+
         return x_local, x_global
 
     def _cond_forward(self, x, cond_tensor, mask):
@@ -420,11 +437,10 @@ class EPiC_Encoder(nn.Module):
         for i in range(self.equiv_layers):
             # contains residual connection
             x_global, x_local = self.nn_list[i](x_global, x_local, cond_tensor, mask)
-        
+
         return x_local, x_global
 
     def forward(self, x, cond_tensor=None, mask=None):
-
         if cond_tensor is None:
             x_local, x_global = self._noncond_forward(x, mask)
         else:
@@ -432,4 +448,3 @@ class EPiC_Encoder(nn.Module):
 
         x_local = self.output_dense(x_local)
         return x_local, x_global
-

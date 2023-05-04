@@ -1,7 +1,7 @@
 # pytorch / deep learning
 torch
 torchvision
-pytorch-lightning
+pytorch - lightning
 torchmetrics
 geomloss
 wandb
@@ -10,8 +10,8 @@ wandb
 jetnet
 
 # hydra
-hydra-core
-hydra-colorlog
+hydra - core
+hydra - colorlog
 
 # plotting
 matplotlib
@@ -21,8 +21,8 @@ plotly
 # data science
 numpy
 scipy
-scikit-learn
-scikit-hep
+scikit - learn
+scikit - hep
 pandas
 tables
 h5py
@@ -33,8 +33,8 @@ black
 pylint
 dotmap
 pyrootutils
-pre-commit
+pre - commit
 rich
 
-#accessibility
+# accessibility
 jupyterlab

@@ -15,7 +15,6 @@ class JetNetData(Dataset):
     different inputs."""
 
     def __init__(self, **kwargs) -> None:
-
         # Extra arguments used here
         self.log_squash_pt = kwargs.pop("log_squash_pt", False)
         self.high_as_context = kwargs.pop("high_as_context", True)
@@ -77,11 +76,11 @@ class JetNetDataModule(LightningDataModule):
     def setup(self, stage: str) -> None:
         """Sets up the relevant datasets."""
 
-        if stage == "fit":
+        if stage in ["fit", "validate"]:
             self.train_set = JetNetData(**self.hparams.data_conf, split="train")
             self.valid_set = JetNetData(**self.hparams.data_conf, split="test")
 
-        if stage == "test":
+        if stage in ["test", "predict"]:
             self.test_set = JetNetData(**self.hparams.data_conf, split="test")
 
     def train_dataloader(self) -> DataLoader:
@@ -94,3 +93,6 @@ class JetNetDataModule(LightningDataModule):
         test_kwargs = deepcopy(self.hparams.loader_kwargs)
         test_kwargs["drop_last"] = False
         return DataLoader(self.test_set, **test_kwargs, shuffle=False)
+
+    def predict_dataloader(self) -> DataLoader:
+        return self.test_dataloader()

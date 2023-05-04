@@ -101,7 +101,6 @@ class MLPBlock(nn.Module):
         # Initialise the block layers as a module list
         self.block = nn.ModuleList()
         for n in range(n_layers):
-
             # Increase the input dimension of the first layer to include context
             lyr_in = inpt_dim + ctxt_dim if n == 0 else outp_dim
 

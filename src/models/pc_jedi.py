@@ -305,6 +305,35 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         # Return the normalisation of the generated point cloud
         return self.normaliser.reverse(outputs, mask=mask)
 
+    def predict_step(self, sample: tuple, _batch_idx: int) -> None:
+        """Single test step which fully generates a batch of jets using the
+        context and mask found in the test set.
+
+        All generated jets must be of the format: eta, phi, pt
+        """
+
+        # Unpack the sample tuple (dont need constituents)
+        _, mask, ctxt = sample
+
+        # Generate the data and move to numpy
+        gen_nodes = to_np(
+            self.full_generation(
+                sampler=self.sampler_name,
+                steps=self.sampler_steps,
+                mask=mask,
+                ctxt=ctxt,
+            )
+        )
+
+        # Undo the log_squash preprocessing
+        if self.trainer.datamodule.test_set.log_squash_pt:
+            gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1])
+        else:
+            gen_nodes[..., -1] *= ctxt[..., 0:1]
+
+        # Return in a dict for standard combining later
+        return {"generated": gen_nodes}
+
     def configure_optimizers(self) -> dict:
         """Configure the optimisers and learning rate sheduler for this
         model."""
