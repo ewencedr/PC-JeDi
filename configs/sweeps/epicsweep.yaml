@@ -1,0 +1,43 @@
+entity: jet-diffusion
+project: epic_jedi_150
+name: jetnet150
+program: train.py
+method: grid
+# run_cap: 100
+
+metric:
+  name: valid/total_loss
+  goal: minimize
+
+parameters:
+  experiment:
+    value: epic.yaml
+  model.epic_jedi_config.hid_d:
+    values:
+      - 64
+      - 128
+      - 256
+  model.epic_jedi_config.equiv_layers:
+    values:
+      - 2
+      - 4
+      - 6
+  model.epic_jedi_config.latent:
+    values:
+      - 5
+      - 10
+  model.optimizer.lr:
+    values:
+      - 1.0e-3
+      - 1.0e-4
+  datamodule.loader_kwargs.batch_size:
+    values:
+      - 128
+      - 256
+      - 512
+  
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args_no_hyphens}  # Hydra compatibility

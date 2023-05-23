@@ -133,3 +133,7 @@ dmypy.json
 
 *.sh
 *workspace
+scripts/wandb
+sweeps/*yaml
+grid_jobs/
+container/

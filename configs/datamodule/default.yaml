@@ -6,8 +6,8 @@ data_conf:
   recalculate_jet_from_pc: True
   jet_type: t
   data_dir: ${paths.data_dir}
-  num_particles: 50
-  split_fraction: [0.7, 0.3, 0.0]
+  num_particles: 30
+  split_fraction: [0.7, 0.0, 0.3]
   particle_features:
     - etarel
     - phirel

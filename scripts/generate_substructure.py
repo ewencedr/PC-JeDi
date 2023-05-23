@@ -25,12 +25,12 @@ def get_args() -> Namespace:
         "--jet_types",
         type=str,
         help="Comma separated names of the jet types to load from.",
-        default="t,g,q,w,z",
+        default="t",
     )
     parser.add_argument(
         "--file_names",
         type=str,
-        default="jetnet_data.h5",
+        default="ddim_200.h5,em_200.h5,euler_200.h5",
         help="Comma separated names of the files to generate from.",
     )
     args = parser.parse_args()
@@ -52,7 +52,7 @@ def main():
             # Load the h5 file
             print(f"Loading {jet_type} jets from file {file_name}...")
             with h5py.File(file_path, "r") as f:
-                gen_nodes = f["generated"][:]
+                gen_nodes = f["etaphipt"][:]
 
             # Clip the eta and phi values for stability
             gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)

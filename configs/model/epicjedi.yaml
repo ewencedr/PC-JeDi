@@ -7,11 +7,9 @@ sampler_name: euler
 sampler_steps: 50
 
 epic_jedi_config:
-  hid_d: 128
-  feats: 3
+  hid_d: 256
   equiv_layers: 6
-  latent: 10
-  cond_feats: 2
+  latent: 5
 
 cosine_config:
   outp_dim: 32

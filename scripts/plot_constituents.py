@@ -13,28 +13,44 @@ from src.plotting import plot_multi_hists_2, quantile_bins
 
 nbins = 50
 jet_types = ["t"]  # , "g", "q", "w", "z"]
-plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots"
+plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/150_constituents"
+
+if not Path(plot_dir).exists():
+    Path(plot_dir).mkdir(parents=True)
 
 all_data = [
     {
         "label": "MC",
         "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/jetnet_data",
-        "file": "jetnet_data",
+        "file": "jetnet_data_150",
         "hist_kwargs": {"color": "tab:blue", "fill": True, "alpha": 0.3},
         "err_kwargs": {"color": "tab:blue", "hatch": "///"},
     },
     {
-        "label": "PC-JeDi 30 EM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_30_check/2023-04-28_15-57-51-470943/",
+        "label": "EPiC-JeDi 150 EM 200",
+        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_150/2023-05-17_13-28-26-652019",
         "file": "em_200",
         "hist_kwargs": {"color": "r"},
     },
     {
-        "label": "PC-JeDi 30 DDIM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_30_check/2023-04-28_15-57-51-470943/",
+        "label": "EPiC-JeDi 150 DDIM 200",
+        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_150/2023-05-17_13-28-26-652019",
         "file": "ddim_200",
         "hist_kwargs": {"color": "g"},
     },
+    {
+        "label": "PC-JeDi 150 EM 200",
+        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
+        "file": "em_200",
+        "hist_kwargs": {"color": "r", "ls": "--"},
+    },
+    {
+        "label": "PC-JeDi 150 DDIM 200",
+        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
+        "file": "ddim_200",
+        "hist_kwargs": {"color": "g", "ls": "--"},
+    },
+    
 ]
 all_data = [DotMap(**d) for d in all_data]
 
@@ -45,7 +61,7 @@ for jet_type in jet_types:
         data_file = Path(d.path, "outputs", jet_type, d.file + ".h5")
 
         with h5py.File(data_file) as f:
-            arr = f["generated"][:]
+            arr = f["etaphipt"][:]
         arr[..., 0] = np.clip(arr[..., 0], -0.5, 0.5)
         arr[..., 1] = np.clip(arr[..., 1], -0.5, 0.5)
         d[jet_type] = arr

@@ -22,8 +22,8 @@ normaliser_config:
 # Full transformer encoder model
 trans_enc_config:
   te_config:
-    model_dim: 128
-    num_layers: 4
+    model_dim: 256
+    num_layers: 3
     mha_config:
       num_heads: 8
     dense_config:
@@ -49,5 +49,5 @@ trans_enc_config:
 optimizer:
   _target_: torch.optim.AdamW
   _partial_: true
-  lr: 1.0e-3
+  lr: 1.0e-4
   weight_decay: 3.0e-5

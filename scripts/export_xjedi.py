@@ -24,13 +24,16 @@ def main(cfg: DictConfig) -> None:
     log.info("Loading run information")
     orig_cfg = reload_original_config(cfg, get_best=cfg.load)
 
+    log.info(f"Project: {cfg.project_name}")
+    log.info(f"Network Name: {cfg.network_name}")
+
     log.info("Loading best checkpoint")
     model_class = hydra.utils.get_class(orig_cfg.model._target_)
     model = model_class.load_from_checkpoint(orig_cfg.ckpt_path)
 
     log.info("Instantiating the data module for the test set")
     datamodule = hydra.utils.instantiate(orig_cfg.datamodule)
-    jet_type = datamodule.data_conf.jet_type
+    jet_type = datamodule.hparams.data_conf.jet_type[0]
 
     log.info("Creating output directory.")
     outdir = Path("outputs") / jet_type

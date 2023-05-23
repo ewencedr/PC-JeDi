@@ -1,0 +1,56 @@
+# @package _global_
+defaults:
+  - override /model: default.yaml
+trainer:
+  check_val_every_n_epoch: 50
+  enable_progress_bar: False
+
+model:
+  trans_enc_config:
+    node_embd_config:
+      act_h: silu
+      nrm: layer
+    ctxt_embd_config:
+      outp_dim: 64
+      hddn_dim: 128
+      num_blocks: 2
+      act_h: silu
+      nrm: layer
+    te_config:
+      model_dim: 256
+      num_layers: 3
+      mha_config:
+        num_heads: 8
+      dense_config:
+        act_h: silu
+        nrm: layer
+    outp_embd_config:
+      act_h: silu
+      nrm: layer
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 1.0e-4
+    weight_decay: 3.0e-5
+    
+# loggers: null
+# callbacks: null
+datamodule:
+  loader_kwargs:
+    batch_size: 256
+    num_workers: 4
+  data_conf:
+    n_jets: null
+    num_particles: 150
+    high_as_context: True
+    jet_type:
+      - t
+    # jet_features:
+    #   - num_particles
+      # - g
+      # - q
+      # - w
+      # - z
+
+project_name: pc_jedi_150 # Determines output directory path and wandb project
+network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

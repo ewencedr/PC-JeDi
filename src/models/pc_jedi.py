@@ -120,7 +120,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         """Shared step used in both training and validaiton."""
 
         # Unpack the sample tuple
-        nodes, mask, ctxt = sample
+        nodes, mask, ctxt, pt = sample
 
         # Pass through the normalisers
         nodes = self.normaliser(nodes, mask)
@@ -191,12 +191,13 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         gen_nodes = np.vstack([v[0] for v in self.val_outs])
         real_nodes = np.vstack([v[1][0] for v in self.val_outs])
         mask = np.vstack([v[1][1] for v in self.val_outs])
-        high = np.vstack([v[1][2] for v in self.val_outs])
+        # high = np.vstack([v[1][2] for v in self.val_outs])
+        pt = np.vstack([v[1][3] for v in self.val_outs])
 
         # Change the data from log(pt+1) into pt fraction (needed for metrics)
         if self.trainer.datamodule.hparams.data_conf.log_squash_pt:
-            gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1]) / high[..., 0:1]
-            real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / high[..., 0:1]
+            gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1]) / pt
+            real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / pt
 
         # Apply clipping
         gen_nodes = np.nan_to_num(gen_nodes)
@@ -309,11 +310,11 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         """Single test step which fully generates a batch of jets using the
         context and mask found in the test set.
 
-        All generated jets must be of the format: eta, phi, pt
+        All generated jets must be of the format: (eta, phi, pt) and (eta, phi, pt_frac)
         """
 
         # Unpack the sample tuple (dont need constituents)
-        _, mask, ctxt = sample
+        _, mask, ctxt, pt = sample
 
         # Generate the data and move to numpy
         gen_nodes = to_np(
@@ -325,14 +326,18 @@ class TransformerDiffusionGenerator(pl.LightningModule):
             )
         )
 
+        etaphipt = gen_nodes.copy()
+        etaphipt_frac = gen_nodes.copy()
+
         # Undo the log_squash preprocessing
         if self.trainer.datamodule.test_set.log_squash_pt:
-            gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1])
+            etaphipt[..., -1] = undo_log_squash(gen_nodes[..., -1])
+            etaphipt_frac[..., -1] = etaphipt[..., -1] / pt.cpu().numpy()
         else:
-            gen_nodes[..., -1] *= ctxt[..., 0:1]
+            etaphipt[..., -1] *= pt
 
         # Return in a dict for standard combining later
-        return {"generated": gen_nodes}
+        return {"etaphipt": etaphipt, "etaphipt_frac": etaphipt_frac}
 
     def configure_optimizers(self) -> dict:
         """Configure the optimisers and learning rate sheduler for this

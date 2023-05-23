@@ -321,7 +321,6 @@ class EPiC_Encoder(nn.Module):
         feats: int,
         equiv_layers: int,
         latent: int,
-        cond_feats: int = 0,
         sum_scale: float = 1e-2,
         cond_dim: int = None,
     ) -> None:
@@ -331,7 +330,7 @@ class EPiC_Encoder(nn.Module):
         self.feats = feats
         self.equiv_layers = equiv_layers
         self.latent = latent
-        self.cond_feats = cond_feats if cond_dim is None else cond_dim
+        self.cond_feats = cond_dim
         self.sum_scale = sum_scale
 
         fc_l1 = nn.Linear(self.feats, self.hid_d)

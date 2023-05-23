@@ -20,36 +20,55 @@ class JetNetData(Dataset):
         self.high_as_context = kwargs.pop("high_as_context", True)
         self.recalc_high = kwargs.pop("recalculate_jet_from_pc", True)
         self.n_jets = kwargs.pop("n_jets", None)
+        self.hlv_features = kwargs["jet_features"]
 
         # All other arguments passed to the jetnet dataset constructor
         self.csts, self.high = JetNet.getData(**kwargs)
         self.csts = self.csts.astype(np.float32)
         self.high = self.high.astype(np.float32)
 
+        # Save te jet pt for undoing the pre-processing
+        pt_kwargs = deepcopy(kwargs)
+        pt_kwargs["jet_features"] = ["pt"]
+        pt_kwargs["num_particles"] = 1
+        _, self.jet_pt = JetNet.getData(**pt_kwargs)
+        self.jet_pt = self.jet_pt.astype(np.float32)
+
         # Trim the data based on the requested number of jets (None does nothing)
         self.csts = self.csts[: self.n_jets].astype(np.float32)
         self.high = self.high[: self.n_jets].astype(np.float32)
+        self.jet_pt = self.jet_pt[: self.n_jets].astype(np.float32)
 
         # Manually calculate the mask by looking for zero padding
         self.mask = ~np.all(self.csts == 0, axis=-1)
 
-        # Change the constituent information from pt-fraction to pure pt
         csts = self.csts.copy()
-        csts[..., -1] = csts[..., -1] * self.high[..., 0:1]
-
         # Recalculate the jet mass and pt using the point cloud
-        if self.recalc_high:
-            self.high = numpy_locals_to_mass_and_pt(csts, self.mask)
+        if self.recalc_high and (
+            "mass" in self.hlv_features or "pt" in self.hlv_features
+        ):
+            jet_kinematics = numpy_locals_to_mass_and_pt(csts, self.mask)
+
+            if "pt" in self.hlv_features:
+                idx = self.hlv_features.index("pt")
+                self.high[..., idx] = jet_kinematics[:, 0]
+
+            if "mass" in self.hlv_features:
+                idx = self.hlv_features.index("mass")
+                self.high[..., idx] = jet_kinematics[:, 1]
 
         # Change the pt fraction to log_squash(pt)
         if self.log_squash_pt:
+            # Change the constituent information from pt-fraction to pure pt
+            csts[..., -1] = csts[..., -1] * self.jet_pt
             self.csts[..., -1] = log_squash(csts[..., -1]) * self.mask
 
     def __getitem__(self, idx) -> tuple:
         csts = self.csts[idx]
         high = self.high[idx] if self.high_as_context else np.empty(0, dtype="f")
         mask = self.mask[idx]
-        return csts, mask, high
+        pt = self.jet_pt[idx]
+        return csts, mask, high, pt
 
     def __len__(self) -> int:
         return len(self.high)
