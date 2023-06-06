@@ -30,8 +30,8 @@ model:
     lr: 0.0001
   epic_jedi_config:
     hid_d: 128
-    latent: 10
+    latent: 16
     equiv_layers: 6
 
-project_name: epic_jedi_30 # Determines output directory path and wandb project
+project_name: longer_epic_jedi_30 # Determines output directory path and wandb project
 network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

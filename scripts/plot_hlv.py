@@ -27,27 +27,39 @@ sub_vars = [
     # "pt",
 ]
 feat_spread_vars = ["tau21", "tau32", "d2", "mass"]
-plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots"
+plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/30_constituents"
 
 all_data = [
     {
         "label": "MC",
         "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/jetnet_data",
-        "file": "jetnet_data",
+        "file": "jetnet_data_30",
         "hist_kwargs": {"color": "tab:blue", "fill": True, "alpha": 0.3},
         "err_kwargs": {"color": "tab:blue", "hatch": "///"},
     },
     {
-        "label": "PC-JeDi 30 EM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_30_check/2023-04-28_15-57-51-470943/",
+        "label": "EPiC-JeDi 30 EM 200",
+        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_30/2023-05-19_10-03-09-602489",
         "file": "em_200",
         "hist_kwargs": {"color": "r"},
     },
+    {
+        "label": "EPiC-JeDi 30 DDIM 200",
+        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_30/2023-05-19_10-03-09-602489",
+        "file": "ddim_200",
+        "hist_kwargs": {"color": "g"},
+    },
     # {
-    #     "label": "PC-JeDi 30 DDIM 200",
-    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_30_check/2023-04-28_15-57-51-470943/",
+    #     "label": "PC-JeDi 150 EM 200",
+    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_uncond_30/2023-05-19_10-45-33-374505",
+    #     "file": "em_200",
+    #     "hist_kwargs": {"color": "r", "ls": "--"},
+    # },
+    # {
+    #     "label": "PC-JeDi 150 DDIM 200",
+    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_uncond_30/2023-05-19_10-45-33-374505",
     #     "file": "ddim_200",
-    #     "hist_kwargs": {"color": "g"},
+    #     "hist_kwargs": {"color": "g", "ls": "--"},
     # },
 ]
 

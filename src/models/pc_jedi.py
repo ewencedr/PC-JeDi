@@ -6,7 +6,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch as T
 import wandb
-from jetnet.evaluation import w1efp, w1m, w1p
+from jetnet.evaluation import w1efp, w1m, w1p,fpnd
 
 from src.models.diffusion import VPDiffusionSchedule, run_sampler
 from src.models.modules import CosineEncoding, IterativeNormLayer
@@ -217,12 +217,14 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         w1m_val, w1m_err = w1m(real_nodes, gen_nodes, **bootstrap)
         w1p_val, w1p_err = w1p(real_nodes, gen_nodes, **bootstrap)
         w1efp_val, w1efp_err = w1efp(real_nodes, gen_nodes, efp_jobs=1, **bootstrap)
+        fpnd_val = fpnd(gen_nodes,jet_type="t")
         self.log("valid/w1m", w1m_val)
         self.log("valid/w1m_err", w1m_err)
         self.log("valid/w1p", w1p_val.mean())
         self.log("valid/w1p_err", w1p_err.mean())
         self.log("valid/w1efp", w1efp_val.mean())
         self.log("valid/w1efp_err", w1efp_err.mean())
+        self.log("valid/fpnd", fpnd_val.mean())
 
         # Plot the MPGAN-like marginals
         plot_mpgan_marginals(gen_nodes, real_nodes, mask, self.trainer.current_epoch)
@@ -253,6 +255,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
             wandb.define_metric("valid/w1m", summary="min")
             wandb.define_metric("valid/w1p", summary="min")
             wandb.define_metric("valid/w1efp", summary="min")
+            wandb.define_metric("valid/fpnd", summary="min")
 
     def set_sampler(
         self, sampler_name: Optional[str] = None, sampler_steps: Optional[int] = None

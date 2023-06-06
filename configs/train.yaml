@@ -10,11 +10,11 @@ defaults:
   - hydra: default.yaml
   - paths: default.yaml
   - callbacks: default.yaml
-  - experiment: epic.yaml
+  - experiment: null
 
 seed: 12345 # For reproducibility
-project_name: pc_jedi_150 # Determines output directory path and wandb project
-network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f} # Used for both saving and wandb
+project_name: longer_epic_jedi_30 # Determines output directory path and wandb project
+network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}
 ckpt_path: null  # Checkpoint path to resume training
 
 # COMPLETELY replaces the above config with what is contained in ${paths.full_path}

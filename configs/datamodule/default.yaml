@@ -19,6 +19,6 @@ data_conf:
 
 loader_kwargs:
   pin_memory: true
-  batch_size: 256
-  num_workers: 6
+  batch_size: 1024
+  num_workers: 2
   drop_last: True

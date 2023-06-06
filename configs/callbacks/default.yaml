@@ -2,7 +2,7 @@ model_checkpoint:
   _target_: pytorch_lightning.callbacks.ModelCheckpoint
   dirpath: ${paths.full_path}/checkpoints
   filename: best_{epoch:03d}
-  monitor: valid/total_loss
+  monitor: valid/fpnd
   mode: min
   save_last: True
   auto_insert_metric_name: False

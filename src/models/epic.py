@@ -447,3 +447,73 @@ class EPiC_Encoder(nn.Module):
 
         x_local = self.output_dense(x_local)
         return x_local, x_global
+
+
+class EPiC2_Encoder(nn.Module):
+    def __init__(
+        self,
+        inpt_dim: int,
+        outp_dim: int,
+        ctxt_dim: int = 0,
+        equiv_layers: int = 6,
+        sum_scale: float = 1e-2,
+        latent: int = 32,
+        hid_d: int = 128,
+    ) -> None:
+        super().__init__()
+
+        self.inpt_dim = inpt_dim
+        self.outp_dim = outp_dim
+        self.ctxt_dim = ctxt_dim
+        self.equiv_layers = equiv_layers
+        self.sum_scale = sum_scale
+        self.latent = latent
+        self.hid_d = hid_d
+
+        fc_l1 = nn.Linear(self.inpt_dim, self.hid_d)
+        self.fc_l1 = weight_norm(fc_l1, ["weight"])
+
+        fc_l2 = nn.Linear(self.hid_d, self.hid_d)
+        self.fc_l2 = weight_norm(fc_l2, ["weight"])
+
+        fc_g1 = nn.Linear(int(2 * self.hid_d + self.cond_feats), self.hid_d)
+        self.fc_g1 = weight_norm(fc_g1, ["weight"])
+
+        fc_g2 = nn.Linear(self.hid_d, self.latent)
+        self.fc_g2 = weight_norm(fc_g2, ["weight"])
+
+        output_dense = nn.Linear(self.hid_d, self.outp_dim)
+        self.output_dense = weight_norm(output_dense, ["weight"])
+
+        self.nn_list = nn.ModuleList()
+
+        for _ in range(self.equiv_layers):
+            self.nn_list.append(
+                EPiC_layer_cond_mask(
+                    self.hid_d,
+                    self.hid_d,
+                    self.latent,
+                    self.ctxt_dim,
+                    sum_scale=self.sum_scale,
+                )
+            )
+    
+    def forward(self, x, mask, cond_tensor):
+        x_local = F.leaky_relu(self.fc_l1(x))
+        x_local = F.leaky_relu(self.fc_l2(x_local) + x_local)
+
+        # global features: masked
+        x_local = x_local * mask.view(x_local.shape[0], x_local.shape[1], 1)
+        x_sum = x_local.sum(1, keepdim=False)
+        x_mean = x_sum / mask.sum(1).view(x_sum.shape[0], 1)
+        x_sum = x_sum * self.sum_scale
+        x_global = torch.cat([x_mean, x_sum, cond_tensor], 1)
+        x_global = F.leaky_relu(self.fc_g1(x_global))
+        x_global = F.leaky_relu(self.fc_g2(x_global))  # projecting down to latent size
+
+        # equivariant connections
+        for i in range(self.equiv_layers):
+            # contains residual connection
+            x_global, x_local = self.nn_list[i](x_global, x_local, cond_tensor, mask)
+
+        return x_local, x_global

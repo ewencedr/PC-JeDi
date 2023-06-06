@@ -2,14 +2,14 @@ _target_: src.models.epic_jedi.EpicDiffusionGenerator
 
 ema_sync: 0.999
 loss_name: huber
-mle_loss_weight: 0.0001
+mle_loss_weight: 0.001
 sampler_name: euler
 sampler_steps: 50
 
 epic_jedi_config:
   hid_d: 256
   equiv_layers: 6
-  latent: 5
+  latent: 10
 
 cosine_config:
   outp_dim: 32
@@ -28,5 +28,5 @@ normaliser_config:
 optimizer:
   _target_: torch.optim.AdamW
   _partial_: true
-  lr: 1.0e-4
-  weight_decay: 3.0e-5
+  lr: 0.0001
+  weight_decay: 0.0001
