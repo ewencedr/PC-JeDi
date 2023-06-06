@@ -1,10 +1,11 @@
 # @package _global_
 defaults:
-  - override /model: default.yaml
+  - override /model: epicjedi.yaml
 trainer:
   check_val_every_n_epoch: 50
-  enable_progress_bar: True
-    
+  enable_progress_bar: False
+
+
 # loggers: null
 # callbacks: null
 datamodule:
@@ -13,18 +14,21 @@ datamodule:
     num_workers: 0
   data_conf:
     n_jets: null
-    num_particles: 30
+    num_particles: 150
     high_as_context: True
     jet_type:
-      - t
+      - t  
     jet_features:
-     - pt
-     - mass
-    #   - num_particles
+      - pt
+      - mass
       # - g
       # - q
       # - w
       # - z
+model:
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0001
 
-project_name: pc_jedi_30_check # Determines output directory path and wandb project
+project_name: epic_jedi1 # Determines output directory path and wandb project
 network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

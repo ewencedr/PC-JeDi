@@ -10,8 +10,8 @@ trainer:
 # callbacks: null
 datamodule:
   loader_kwargs:
-    batch_size: 256
-    num_workers: 4
+    batch_size: 1024
+    num_workers: 0
   data_conf:
     n_jets: null
     num_particles: 30
@@ -28,10 +28,7 @@ datamodule:
 model:
   optimizer:
     lr: 0.0001
-  epic_jedi_config:
-    hid_d: 128
-    latent: 16
-    equiv_layers: 6
+    weight_decay: 0.0001
 
-project_name: longer_epic_jedi_30 # Determines output directory path and wandb project
+project_name: epic_jedi1 # Determines output directory path and wandb project
 network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

@@ -31,7 +31,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         normaliser_config: Mapping,
         trans_enc_config: Mapping,
         optimizer: partial,
-        loss_name: str = "mse",
+        loss_name: str = "huber",
         mle_loss_weight: float = 0.0,
         ema_sync: float = 0.999,
         sampler_name: str = "em",

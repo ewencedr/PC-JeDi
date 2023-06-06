@@ -15,10 +15,10 @@ data_conf:
   jet_features:
     - pt
     - mass
-  log_squash_pt: True
+  log_squash_pt: False
 
 loader_kwargs:
   pin_memory: true
   batch_size: 1024
-  num_workers: 2
+  num_workers: 0
   drop_last: True

@@ -23,31 +23,34 @@ normaliser_config:
 trans_enc_config:
   te_config:
     model_dim: 256
-    num_layers: 3
+    num_layers: 4
     mha_config:
       num_heads: 8
     dense_config:
-      hddn_dim: 256
-      act_h: lrlu
+      hddn_dim: 512
+      num_blocks: 1
+      act_h: silu
       nrm: layer
   node_embd_config:
-    hddn_dim: 256
-    act_h: lrlu
+    hddn_dim: 512
+    num_blocks: 1
+    act_h: silu
     nrm: layer
   outp_embd_config:
-    hddn_dim: 256
-    act_h: lrlu
+    hddn_dim: 512
+    num_blocks: 1
+    act_h: silu
     nrm: layer
   ctxt_embd_config:
     outp_dim: 64
     hddn_dim: 128
     num_blocks: 2
-    act_h: lrlu
+    act_h: silu
     nrm: layer
 
 # Full configuration for the model optimizer
 optimizer:
   _target_: torch.optim.AdamW
   _partial_: true
-  lr: 1.0e-4
-  weight_decay: 3.0e-5
+  lr: 0.0001
+  weight_decay: 0.0001
