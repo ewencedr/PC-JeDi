@@ -11,9 +11,14 @@ import torch as T
 
 from src.plotting import plot_multi_hists_2, quantile_bins
 
+num_const = 30
+project = "epic_jedi1_c"
+directory = "2023-06-17_13-04-08-775952"
 nbins = 50
 jet_types = ["t"]  # , "g", "q", "w", "z"]
-plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/150_constituents"
+plot_dir = (
+    f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/{num_const}_constituents"
+)
 
 if not Path(plot_dir).exists():
     Path(plot_dir).mkdir(parents=True)
@@ -22,35 +27,34 @@ all_data = [
     {
         "label": "MC",
         "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/jetnet_data",
-        "file": "jetnet_data_150",
+        "file": f"jetnet_data_{num_const}",
         "hist_kwargs": {"color": "tab:blue", "fill": True, "alpha": 0.3},
         "err_kwargs": {"color": "tab:blue", "hatch": "///"},
     },
     {
-        "label": "EPiC-JeDi 150 EM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_150/2023-05-17_13-28-26-652019",
+        "label": f"EPiC-JeDi {num_const} EM 200",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
         "file": "em_200",
         "hist_kwargs": {"color": "r"},
     },
     {
-        "label": "EPiC-JeDi 150 DDIM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_150/2023-05-17_13-28-26-652019",
+        "label": f"EPiC-JeDi {num_const} DDIM 200",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
         "file": "ddim_200",
         "hist_kwargs": {"color": "g"},
     },
-    {
-        "label": "PC-JeDi 150 EM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
-        "file": "em_200",
-        "hist_kwargs": {"color": "r", "ls": "--"},
-    },
-    {
-        "label": "PC-JeDi 150 DDIM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
-        "file": "ddim_200",
-        "hist_kwargs": {"color": "g", "ls": "--"},
-    },
-    
+    # {
+    #     "label": "PC-JeDi 150 EM 200",
+    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
+    #     "file": "em_200",
+    #     "hist_kwargs": {"color": "r", "ls": "--"},
+    # },
+    # {
+    #     "label": "PC-JeDi 150 DDIM 200",
+    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
+    #     "file": "ddim_200",
+    #     "hist_kwargs": {"color": "g", "ls": "--"},
+    # },
 ]
 all_data = [DotMap(**d) for d in all_data]
 
@@ -86,7 +90,7 @@ for jet_type in jet_types:
         },
         rat_ylim=[0.5, 1.5],
         do_ratio_to_first=True,
-        path=Path(plot_dir, f"{jet_type}_constituents.png"),
+        path=Path(plot_dir, f"{jet_type}_constituents.pdf"),
         do_norm=True,
     )
 
@@ -111,6 +115,6 @@ for jet_type in jet_types:
         },
         rat_ylim=[0.5, 1.5],
         do_ratio_to_first=True,
-        path=Path(plot_dir, f"{jet_type}_leading_constituents.png"),
+        path=Path(plot_dir, f"{jet_type}_leading_constituents.pdf"),
         do_norm=True,
     )

@@ -9,7 +9,7 @@ from dotmap import DotMap
 
 from src.plotting import plot_multi_correlations, plot_multi_hists_2
 
-nbins = 30
+
 n_kde_points = 200
 jet_types = ["t"]  # , "g", "q", "w", "z"]
 sub_vars = [
@@ -24,45 +24,57 @@ sub_vars = [
     # "ecf3",
     "d2",
     "mass",
-    # "pt",
+    "pt",
 ]
 feat_spread_vars = ["tau21", "tau32", "d2", "mass"]
 plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/30_constituents"
+
+num_const = 30
+project = "epic_jedi1_c"
+directory = "2023-06-17_13-02-33-464829"
+nbins = 50
+jet_types = ["t"]  # , "g", "q", "w", "z"]
+plot_dir = (
+    f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/{num_const}_constituents"
+)
+
+if not Path(plot_dir).exists():
+    Path(plot_dir).mkdir(parents=True)
+
 
 all_data = [
     {
         "label": "MC",
         "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/jetnet_data",
-        "file": "jetnet_data_30",
+        "file": f"jetnet_data_{num_const}",
         "hist_kwargs": {"color": "tab:blue", "fill": True, "alpha": 0.3},
         "err_kwargs": {"color": "tab:blue", "hatch": "///"},
     },
     {
-        "label": "EPiC-JeDi 30 EM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_30/2023-05-19_10-03-09-602489",
+        "label": f"EPiC-JeDi {num_const} EM 200",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
         "file": "em_200",
         "hist_kwargs": {"color": "r"},
     },
     {
-        "label": "EPiC-JeDi 30 DDIM 200",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi_30/2023-05-19_10-03-09-602489",
+        "label": f"EPiC-JeDi {num_const} DDIM 200",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
         "file": "ddim_200",
         "hist_kwargs": {"color": "g"},
     },
     # {
     #     "label": "PC-JeDi 150 EM 200",
-    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_uncond_30/2023-05-19_10-45-33-374505",
+    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
     #     "file": "em_200",
     #     "hist_kwargs": {"color": "r", "ls": "--"},
     # },
     # {
     #     "label": "PC-JeDi 150 DDIM 200",
-    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_uncond_30/2023-05-19_10-45-33-374505",
+    #     "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/pc_jedi_150/2023-05-19_11-01-28-016315",
     #     "file": "ddim_200",
     #     "hist_kwargs": {"color": "g", "ls": "--"},
     # },
 ]
-
 all_data = [DotMap(**d) for d in all_data]
 
 # Cycle through the jet types and variables and make each plot
@@ -87,7 +99,7 @@ for jet_type in jet_types:
                 "alignment": "left",
             },
             do_ratio_to_first=True,
-            path=Path(plot_dir, f"{jet_type}_{sub_var}.png"),
+            path=Path(plot_dir, f"{jet_type}_{sub_var}.pdf"),
             do_norm=True,
         )
 
@@ -123,7 +135,7 @@ for jet_type in jet_types:
                     "alignment": "left",
                 },
                 do_ratio_to_first=True,
-                path=Path(plot_dir, f"{jet_type}_{sub_var}_60_100.png"),
+                path=Path(plot_dir, f"{jet_type}_{sub_var}_60_100.pdf"),
                 do_norm=True,
             )
 
@@ -151,7 +163,7 @@ for jet_type in jet_types:
                     "alignment": "left",
                 },
                 do_ratio_to_first=True,
-                path=Path(plot_dir, f"{jet_type}_{sub_var}_140_200.png"),
+                path=Path(plot_dir, f"{jet_type}_{sub_var}_140_200.pdf"),
                 do_norm=True,
             )
 
@@ -165,19 +177,19 @@ for jet_type in jet_types:
                 d[s] = f[s][:]
 
     # Combine the columns to pass to the plotter
-    plot_multi_correlations(
-        data_list=[np.stack([d[s] for s in feat_spread_vars]).T for d in all_data],
-        data_labels=[d.label for d in all_data],
-        col_labels=feat_spread_vars,
-        n_bins=nbins,
-        n_kde_points=n_kde_points,
-        hist_kwargs=[d.hist_kwargs for d in all_data],
-        err_kwargs=[d.err_kwargs for d in all_data],
-        legend_kwargs={
-            "loc": "upper right",
-            "alignment": "right",
-            "fontsize": 15,
-            "bbox_to_anchor": (0.8, 0.90),
-        },
-        path=Path(plot_dir, f"hlv_corr_{jet_type}.png"),
-    )
+    # plot_multi_correlations(
+    #     data_list=[np.stack([d[s] for s in feat_spread_vars]).T for d in all_data],
+    #     data_labels=[d.label for d in all_data],
+    #     col_labels=feat_spread_vars,
+    #     n_bins=nbins,
+    #     n_kde_points=n_kde_points,
+    #     hist_kwargs=[d.hist_kwargs for d in all_data],
+    #     err_kwargs=[d.err_kwargs for d in all_data],
+    #     legend_kwargs={
+    #         "loc": "upper right",
+    #         "alignment": "right",
+    #         "fontsize": 15,
+    #         "bbox_to_anchor": (0.8, 0.90),
+    #     },
+    #     path=Path(plot_dir, f"hlv_corr_{jet_type}.pdf"),
+    # )

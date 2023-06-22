@@ -16,6 +16,8 @@ datamodule:
     n_jets: null
     num_particles: 150
     high_as_context: True
+    recalculate_jet_from_pc: False
+    log_squash_pt: False
     jet_type:
       - t  
     jet_features:
@@ -26,6 +28,8 @@ datamodule:
       # - w
       # - z
 model:
+  epic_jedi_config:
+    latent: 5
   optimizer:
     lr: 0.0001
     weight_decay: 0.0001

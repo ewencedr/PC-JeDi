@@ -13,8 +13,10 @@ datamodule:
     num_workers: 0
   data_conf:
     n_jets: null
-    num_particles: 30
+    num_particles: 150
     high_as_context: True
+    log_squash_pt: False
+    recalculate_jet_from_pc: False
     jet_type:
       - t
     jet_features:
@@ -26,5 +28,5 @@ datamodule:
       # - w
       # - z
 
-project_name: pc_jedi_30_check # Determines output directory path and wandb project
+project_name: epic_jedi1 # Determines output directory path and wandb project
 network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

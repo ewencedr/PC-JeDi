@@ -7,11 +7,11 @@ import h5py
 from jetnet.datasets import JetNet
 
 # How the data should be saved
-num = 150
+num = 30
 save_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/"
 save_name = "jetnet_data"
 file_name = f"jetnet_data_{num}"
-type_list = ["g", "q", "t", "w", "z"]
+type_list = ["t"]
 
 # Cycle through each of the jet types
 for jet_type in type_list:

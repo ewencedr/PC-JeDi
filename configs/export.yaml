@@ -6,22 +6,24 @@ defaults:
   - _self_
 
 sampler_steps:
-  - 200
-  # - 100
   # - 200
-  # - 50
-  # - 20
-  # - 40
-  # - 60
-  # - 80
+  - 100
+  - 200
+  - 50
+  - 20
+  - 40
+  - 60
+  - 80
   # - 100
 
 sampler_name:
-
   - em
+  - euler
+  - ddim
+  - rk
 
-load: best
+load: last
 
-project_name: pc_jedi_150
-network_name: 2023-05-19_11-01-28-016315
+project_name: epic_jedi1_c
+network_name: null
 

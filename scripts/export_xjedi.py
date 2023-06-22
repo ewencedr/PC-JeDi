@@ -55,16 +55,18 @@ def main(cfg: DictConfig) -> None:
             gen_time_track = time.time()
             outputs = trainer.predict(model=model, datamodule=datamodule)
             end_time = time.time() - gen_time_track
-            log.info(f"Generation time: {end_time:.2f} s")
             log.info("Combining predictions across dataset")
             keys = list(outputs[0].keys())
             comb_dict = {key: np.vstack([o[key] for o in outputs]) for key in keys}
+            log.info(f"Generation time: {end_time:.2f} s")
 
-            # log.info("Saving HDF files.")
-            # with h5py.File(outdir / f"{sampler}_{steps}.h5", mode="w") as file:
-            #     for key in keys:
-            #         file.create_dataset(key, data=comb_dict[key])
+            log.info("Saving HDF files.")
+            with h5py.File(outdir / f"{sampler}_{steps}.h5", mode="w") as file:
+                for key in keys:
+                    file.create_dataset(key, data=comb_dict[key])
 
     print("Done!")
+
+
 if __name__ == "__main__":
     main()

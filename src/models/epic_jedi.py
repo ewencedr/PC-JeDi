@@ -111,9 +111,9 @@ class EpicDiffusionGenerator(pl.LightningModule):
         if self.ctxt_dim:
             context = T.cat([context, ctxt], dim=-1)
 
-        x_local, x_global = network(noisy_data, context, mask)
+        pred_noise = network(noisy_data, context, mask)
 
-        return x_local
+        return pred_noise
 
     def _shared_step(self, sample: tuple) -> Tuple[T.Tensor, T.Tensor]:
         """Shared step used in both training and validaiton."""
@@ -343,7 +343,7 @@ class EpicDiffusionGenerator(pl.LightningModule):
             etaphipt[..., -1] = undo_log_squash(gen_nodes[..., -1])
             etaphipt_frac[..., -1] = etaphipt[..., -1] / pt.cpu().numpy()
         else:
-            etaphipt[..., -1] *= pt
+            etaphipt[..., -1] *= pt.cpu().numpy()
 
         # Return in a dict for standard combining later
         return {"etaphipt": etaphipt, "etaphipt_frac": etaphipt_frac}

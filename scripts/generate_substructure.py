@@ -18,8 +18,14 @@ def get_args() -> Namespace:
     parser.add_argument(
         "--save_dir",
         type=str,
-        default="/srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/",
+        default="/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi1_c/",
         help="Path to directory where all the data is saved.",
+    )
+    parser.add_argument(
+        "--network_name",
+        type=str,
+        default=None,
+        help="Name of the network to load.",
     )
     parser.add_argument(
         "--jet_types",
@@ -30,7 +36,7 @@ def get_args() -> Namespace:
     parser.add_argument(
         "--file_names",
         type=str,
-        default="ddim_200.h5,em_200.h5,euler_200.h5",
+        default="ddim_200.h5,em_200.h5,euler_200.h5,rk_50.h5",
         help="Comma separated names of the files to generate from.",
     )
     args = parser.parse_args()
@@ -41,8 +47,8 @@ def main():
     args = get_args()
 
     # Paths to the relevant folders
-    print(f"Evaluating Network: {args.save_dir}\n")
-    path = Path(args.save_dir, "outputs")
+    print(f"Evaluating Network: {args.save_dir}/{args.network_name}\n")
+    path = Path(args.save_dir, args.network_name, "outputs")
 
     # Cycle through the files to generate substructure variables for each
     for jet_type in args.jet_types.split(","):

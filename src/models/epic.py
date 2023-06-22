@@ -417,7 +417,7 @@ class EPiC_Encoder(nn.Module):
             x_global, x_local = self.nn_list[i](x_global, x_local, mask)
             x_global, x_local = x_global + x_global_in, x_local + x_local_in
 
-        return x_local, x_global
+        return x_local
 
     def _cond_forward(self, x, cond_tensor, mask):
         x_local = F.leaky_relu(self.fc_l1(x))
@@ -437,16 +437,16 @@ class EPiC_Encoder(nn.Module):
             # contains residual connection
             x_global, x_local = self.nn_list[i](x_global, x_local, cond_tensor, mask)
 
-        return x_local, x_global
+        return x_local
 
     def forward(self, x, cond_tensor=None, mask=None):
         if cond_tensor is None:
-            x_local, x_global = self._noncond_forward(x, mask)
+            x_local = self._noncond_forward(x, mask)
         else:
-            x_local, x_global = self._cond_forward(x, cond_tensor, mask)
+            x_local = self._cond_forward(x, cond_tensor, mask)
 
         x_local = self.output_dense(x_local)
-        return x_local, x_global
+        return x_local
 
 
 class EPiC2_Encoder(nn.Module):
@@ -497,7 +497,7 @@ class EPiC2_Encoder(nn.Module):
                     sum_scale=self.sum_scale,
                 )
             )
-    
+
     def forward(self, x, mask, cond_tensor):
         x_local = F.leaky_relu(self.fc_l1(x))
         x_local = F.leaky_relu(self.fc_l2(x_local) + x_local)
@@ -516,4 +516,4 @@ class EPiC2_Encoder(nn.Module):
             # contains residual connection
             x_global, x_local = self.nn_list[i](x_global, x_local, cond_tensor, mask)
 
-        return x_local, x_global
+        return self.output_dense(x_local)
