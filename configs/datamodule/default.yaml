@@ -1,4 +1,4 @@
-_target_: src.datamodules.jet_net.JetNetDataModule
+_target_: src.datamodules.jetnet.JetNetDataModule
 
 data_conf:
   log_squash_pt: False
@@ -16,7 +16,7 @@ data_conf:
       - z
     data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
     num_particles: 150
-    split_fraction: [0.1, 0.1, 0.3]
+    split_fraction: [0.6, 0.1, 0.3]
     particle_features:
       - etarel
       - phirel
