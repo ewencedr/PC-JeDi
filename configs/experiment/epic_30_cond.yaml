@@ -19,16 +19,20 @@ datamodule:
     recalculate_jet_from_pc: False
     log_squash_pt: False
     jet_type:
-      - t  
+      - t 
+      - g
+      - q
+      - w
+      - z
     jet_features:
       - pt
       - mass
 model:
   epic_jedi_config:
-    latent: 5
+    latent: 10
   optimizer:
     lr: 0.0001
     weight_decay: 0.0001
 
-project_name: epic_jedi1_c # Determines output directory path and wandb project
+project_name: epic_jedi1_all # Determines output directory path and wandb project
 network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

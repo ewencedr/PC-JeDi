@@ -162,6 +162,7 @@ class EpicDiffusionGenerator(pl.LightningModule):
         return total_loss
 
     def validation_step(self, sample: tuple, batch_idx: int) -> None:
+        T.manual_seed(9999)
         simple_loss, mle_loss = self._shared_step(sample)
         total_loss = simple_loss + self.mle_loss_weight * mle_loss
         self.log("valid/simple_loss", simple_loss)
