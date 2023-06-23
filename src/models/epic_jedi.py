@@ -181,62 +181,87 @@ class EpicDiffusionGenerator(pl.LightningModule):
         self.val_outs.append((to_np(outputs), to_np(sample)))
 
     def on_validation_epoch_end(self) -> None:
-        """At the end of the validation epoch, calculate and log the metrics
-        and plot the histograms.
+       """Plot histograms of fully generated samples from the validation
+        epoch."""
 
-        This function right now only works with MPGAN configs
-        """
+        # Only do this step on the main gpu
+        if self.trainer.is_global_zero:
 
-        # Combine all outputs
-        gen_nodes = np.vstack([v[0] for v in self.val_outs])
-        real_nodes = np.vstack([v[1][0] for v in self.val_outs])
-        mask = np.vstack([v[1][1] for v in self.val_outs])
-        # high = np.vstack([v[1][2] for v in self.val_outs])
-        pt = np.vstack([v[1][3] for v in self.val_outs])
+            # Combine all outputs
+            all_gen_nodes = np.vstack([v[0] for v in self.val_step_outs])
+            all_real_nodes = np.vstack([v[1][0] for v in self.val_step_outs])
+            all_mask = np.vstack([v[1][1] for v in self.val_step_outs])
+            all_high = np.vstack([v[1][2] for v in self.val_step_outs])
+            all_pt = np.vstack([v[1][3] for v in self.val_step_outs])
 
-        # Change the data from log(pt+1) into pt fraction (needed for metrics)
-        if self.trainer.datamodule.hparams.data_conf.log_squash_pt:
-            gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1]) / pt
-            real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / pt
+            # Get all of the jet labels WHICH SHOULD BE LAST!
+            jet_labels = all_high[:, -1].astype("long")
 
-        # Apply clipping
-        gen_nodes = np.nan_to_num(gen_nodes)
-        gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)
-        gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -0.5, 0.5)
-        gen_nodes[..., 2] = np.clip(gen_nodes[..., 2], 0, 1)
-        real_nodes = np.nan_to_num(real_nodes)
-        real_nodes[..., 0] = np.clip(real_nodes[..., 0], -0.5, 0.5)
-        real_nodes[..., 1] = np.clip(real_nodes[..., 1], -0.5, 0.5)
-        real_nodes[..., 2] = np.clip(real_nodes[..., 2], 0, 1)
+            # Cycle through each of the labels
+            jet_types = ["g", "q", "t", "w", "z"]  # Fixed order based on jetnet
+            for i, jet_type in enumerate(jet_types):
 
+                # Pull out the events in the validation dataset matching the jet type
+                matching_idx = jet_labels == i
+                gen_nodes = all_gen_nodes[matching_idx]
+                real_nodes = all_real_nodes[matching_idx]
+                mask = all_mask[matching_idx]
+                pt = all_pt[matching_idx]
+
+                # Skip the jet type if it is empty (sometimes we only generate t)
+                if matching_idx.sum() == 0:
+                    continue
+
+                # Change the data from log(pt+1) back to pt fraction for the metrics
+                if self.trainer.datamodule.hparams.data_conf.log_squash_pt:
+                    gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1]) / pt
+                    real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / pt
+
+                # Apply clipping to prevent the values from causing issues in metrics
+                gen_nodes = np.nan_to_num(gen_nodes)
+                gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)
+                gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -0.5, 0.5)
+                gen_nodes[..., 2] = np.clip(gen_nodes[..., 2], 0, 1)
+                real_nodes = np.nan_to_num(real_nodes)
+                real_nodes[..., 0] = np.clip(real_nodes[..., 0], -0.5, 0.5)
+                real_nodes[..., 1] = np.clip(real_nodes[..., 1], -0.5, 0.5)
+                real_nodes[..., 2] = np.clip(real_nodes[..., 2], 0, 1)
         # Calculate and log the Wasserstein discriminants
-        bootstrap = {
-            "num_eval_samples": 10000,
-            "num_batches": 10,
-        }
-        w1m_val, w1m_err = w1m(real_nodes, gen_nodes, **bootstrap)
-        w1p_val, w1p_err = w1p(real_nodes, gen_nodes, **bootstrap)
-        w1efp_val, w1efp_err = w1efp(real_nodes, gen_nodes, efp_jobs=1, **bootstrap)
-        if gen_nodes.shape[-2] > 30:
-            sort_idx = np.argsort(gen_nodes[..., 2], axis=-1)[..., None]
-            top_30 = np.take_along_axis(gen_nodes, sort_idx, axis=1)
-            top_30 = top_30[:, -30:]
-            fpnd_val = fpnd(top_30, jet_type="t")
-        else:
-            fpnd_val = fpnd(gen_nodes, jet_type="t")
-        self.log(f"valid/fpnd", fpnd_val)
+                bootstrap = {
+                    "num_eval_samples": 10000,
+                    "num_batches": 10,
+                }
+                w1m_val, w1m_err = w1m(real_nodes, gen_nodes, **bootstrap)
+                w1p_val, w1p_err = w1p(real_nodes, gen_nodes, **bootstrap)
+                w1efp_val, w1efp_err = w1efp(real_nodes, gen_nodes, efp_jobs=1, **bootstrap)
+                self.log("valid/w1m", w1m_val)
+                self.log("valid/w1m_err", w1m_err)
+                self.log("valid/w1p", w1p_val.mean())
+                self.log("valid/w1p_err", w1p_err.mean())
+                self.log("valid/w1efp", w1efp_val.mean())
+                self.log("valid/w1efp_err", w1efp_err.mean())
+                
+                # Calculate the FPND metric which is only valid for some jets with 30 csts
+                if jet_type in ["g", "t", "q"]:
+                    if gen_nodes.shape[-2] > 30:
+                        sort_idx = np.argsort(gen_nodes[..., 2], axis=-1)[..., None]
+                        top_30 = np.take_along_axis(gen_nodes, sort_idx, axis=1)
+                        top_30 = top_30[:, -30:]
+                        fpnd_val = fpnd(top_30, jet_type=jet_type)
+                    else:
+                        fpnd_val = fpnd(gen_nodes, jet_type=jet_type)
+                    self.log(f"valid/{jet_type}_fpnd", fpnd_val)
 
-        self.log("valid/w1m", w1m_val)
-        self.log("valid/w1m_err", w1m_err)
-        self.log("valid/w1p", w1p_val.mean())
-        self.log("valid/w1p_err", w1p_err.mean())
-        self.log("valid/w1efp", w1efp_val.mean())
-        self.log("valid/w1efp_err", w1efp_err.mean())
-        # self.log("valid/fpnd", fpnd_val.mean())
+                # Plot the MPGAN-like marginals
+                plot_mpgan_marginals(
+                    gen_nodes, real_nodes, mask, self.trainer.current_epoch, jet_type
+                )
 
-        # Plot the MPGAN-like marginals
-        plot_mpgan_marginals(gen_nodes, real_nodes, mask, self.trainer.current_epoch)
-        self.val_outs.clear()
+        # Clear the outputs
+        self.trainer.strategy.barrier()  # let other cards to wait for the main
+        self.val_step_outs.clear()
+
+
 
     def _sync_ema_network(self) -> None:
         """Updates the Exponential Moving Average Network."""

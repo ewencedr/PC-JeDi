@@ -61,9 +61,15 @@ def main(cfg: DictConfig) -> None:
             log.info(f"Generation time: {end_time:.2f} s")
 
             log.info("Saving HDF files.")
-            with h5py.File(outdir / f"{sampler}_{steps}.h5", mode="w") as file:
-                for key in keys:
-                    file.create_dataset(key, data=comb_dict[key])
+
+            log.info("Saving seperate file for each jet type in test set")
+            jet_labels = datamodule.test_set.high[:, -1].astype("long")
+            jet_types = datamodule.jet_types()
+            for i, jet_type in enumerate(jet_types):
+                Path(f"outputs/{jet_type}").mkdir(exist_ok=True, parents=True)
+                with h5py.File(f"outputs/{jet_type}/f"{sampler}_{steps}.h5", mode="w") as file:
+                    for key in keys:
+                        file.create_dataset(key, data=comb_dict[key][jet_labels == i])
 
     print("Done!")
 
