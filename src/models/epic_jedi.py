@@ -39,6 +39,7 @@ class EpicDiffusionGenerator(pl.LightningModule):
         sampler_name: str = "em",
         sampler_steps: int = 100,
     ) -> None:
+
         """
         Args:
             pc_dim: The dimension of the point cloud
@@ -89,7 +90,7 @@ class EpicDiffusionGenerator(pl.LightningModule):
         self.sampler_steps = sampler_steps
 
         # Record of the outputs of the validation step
-        self.val_outs = []
+        self.val_step_outs = []
 
     def forward(
         self,
@@ -178,45 +179,36 @@ class EpicDiffusionGenerator(pl.LightningModule):
         )
 
         # Add to the collection of the validaiton outputs
-        self.val_outs.append((to_np(outputs), to_np(sample)))
+        self.val_step_outs.append((to_np(outputs), to_np(sample)))
 
     def on_validation_epoch_end(self) -> None:
+       
        """Plot histograms of fully generated samples from the validation
         epoch."""
-
-        # Only do this step on the main gpu
-        if self.trainer.is_global_zero:
-
-            # Combine all outputs
-            all_gen_nodes = np.vstack([v[0] for v in self.val_step_outs])
-            all_real_nodes = np.vstack([v[1][0] for v in self.val_step_outs])
-            all_mask = np.vstack([v[1][1] for v in self.val_step_outs])
-            all_high = np.vstack([v[1][2] for v in self.val_step_outs])
-            all_pt = np.vstack([v[1][3] for v in self.val_step_outs])
-
-            # Get all of the jet labels WHICH SHOULD BE LAST!
-            jet_labels = all_high[:, -1].astype("long")
-
-            # Cycle through each of the labels
-            jet_types = ["g", "q", "t", "w", "z"]  # Fixed order based on jetnet
-            for i, jet_type in enumerate(jet_types):
-
+       if self.trainer.is_global_zero:
+        all_gen_nodes = np.vstack([v[0] for v in self.val_step_outs])
+        all_real_nodes = np.vstack([v[1][0] for v in self.val_step_outs])
+        all_mask = np.vstack([v[1][1] for v in self.val_step_outs])
+        all_high = np.vstack([v[1][2] for v in self.val_step_outs])
+        all_pt = np.vstack([v[1][3] for v in self.val_step_outs])
+        # Get all of the jet labels WHICH SHOULD BE LAST!
+        jet_labels = all_high[:, -1].astype("long")
+        # Cycle through each of the labels
+        jet_types = ["g", "q", "t", "w", "z"]  # Fixed order based on jetnet
+        for i, jet_type in enumerate(jet_types):
                 # Pull out the events in the validation dataset matching the jet type
                 matching_idx = jet_labels == i
                 gen_nodes = all_gen_nodes[matching_idx]
                 real_nodes = all_real_nodes[matching_idx]
                 mask = all_mask[matching_idx]
                 pt = all_pt[matching_idx]
-
                 # Skip the jet type if it is empty (sometimes we only generate t)
                 if matching_idx.sum() == 0:
                     continue
-
                 # Change the data from log(pt+1) back to pt fraction for the metrics
                 if self.trainer.datamodule.hparams.data_conf.log_squash_pt:
                     gen_nodes[..., -1] = undo_log_squash(gen_nodes[..., -1]) / pt
                     real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / pt
-
                 # Apply clipping to prevent the values from causing issues in metrics
                 gen_nodes = np.nan_to_num(gen_nodes)
                 gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)
@@ -251,17 +243,12 @@ class EpicDiffusionGenerator(pl.LightningModule):
                     else:
                         fpnd_val = fpnd(gen_nodes, jet_type=jet_type)
                     self.log(f"valid/{jet_type}_fpnd", fpnd_val)
-
                 # Plot the MPGAN-like marginals
                 plot_mpgan_marginals(
                     gen_nodes, real_nodes, mask, self.trainer.current_epoch, jet_type
                 )
-
-        # Clear the outputs
-        self.trainer.strategy.barrier()  # let other cards to wait for the main
-        self.val_step_outs.clear()
-
-
+       self.trainer.strategy.barrier()
+       self.val_step_outs.clear()
 
     def _sync_ema_network(self) -> None:
         """Updates the Exponential Moving Average Network."""

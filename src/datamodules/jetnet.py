@@ -6,9 +6,8 @@ import numpy as np
 from jetnet.datasets import JetNet
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
-
-from mattstools.mattstools.numpy_utils import log_squash, onehot_encode
-from mattstools.mattstools.plotting import plot_multi_hists_2
+from src.numpy_utils import log_squash, onehot_encode
+from src.plotting import plot_multi_hists_2
 
 
 def rotatate_constituents(
@@ -159,7 +158,7 @@ class JetNetDataModule(LightningDataModule):
 
         if stage in ["fit", "validate"]:
             self.train_set = JetNetData(**self.hparams.data_conf, split="train")
-            self.valid_set = JetNetData(**self.hparams.data_conf, split="val")
+            self.valid_set = JetNetData(**self.hparams.data_conf, split="valid")
             self.train_set.plot()
 
         if stage in ["test", "predict"]:
