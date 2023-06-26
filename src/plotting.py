@@ -349,21 +349,18 @@ def plot_mpgan_marginals(
     nodes: np.ndarray,
     mask: np.ndarray,
     current_epoch: int,
+    jet_type: str,
 ) -> None:
-    # Clip the outputs for the marginals to match expected jet spread
-    outputs[..., 0] = np.clip(outputs[..., 0], -0.5, 0.5)
-    outputs[..., 1] = np.clip(outputs[..., 1], -0.5, 0.5)
-    outputs[..., 2] = np.clip(outputs[..., 2], 0, 1)
-
     # Plot histograms for the constituent marginals
     Path("./plots/").mkdir(parents=False, exist_ok=True)
-    cst_img = plot_multi_hists(
+    cst_img = plot_multi_hists_2(
         data_list=[nodes[mask], outputs[mask]],
         data_labels=["Original", "Generated"],
         col_labels=[r"$\Delta \eta$", r"$\Delta \phi$", r"$\frac{p_T}{Jet_{p_T}}$"],
         do_norm=True,
+        do_err=True,
         return_img=True,
-        path=f"./plots/csts_{current_epoch}",
+        path=f"./plots/csts_{jet_type}_{current_epoch}",
         logy=True,
     )
 
@@ -379,20 +376,21 @@ def plot_mpgan_marginals(
     real_jets = np.nan_to_num(real_jets)
 
     # Image for the total jet variables
-    jet_img = plot_multi_hists(
+    jet_img = plot_multi_hists_2(
         data_list=[real_jets, pred_jets],
         data_labels=["Original", "Generated"],
         col_labels=["Relative Jet Mass", "Jet EFP"],
+        do_err=True,
         do_norm=True,
         return_img=True,
-        path=f"./plots/jets_{current_epoch}",
+        path=f"./plots/jets_{jet_type}_{current_epoch}",
     )
 
     # Create the wandb table and add the data
     if wandb.run is not None:
         gen_table = wandb.Table(columns=["constituents", "jets"])
         gen_table.add_data(wandb.Image(cst_img), wandb.Image(jet_img))
-        wandb.run.log({"generated": gen_table}, commit=False)
+        wandb.run.log({jet_type: gen_table}, commit=False)
 
 
 def plot_multi_hists_2(

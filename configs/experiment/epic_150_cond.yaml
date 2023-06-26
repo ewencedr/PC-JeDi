@@ -5,7 +5,6 @@ trainer:
   check_val_every_n_epoch: 50
   enable_progress_bar: False
 
-
 # loggers: null
 # callbacks: null
 datamodule:
@@ -13,20 +12,25 @@ datamodule:
     batch_size: 1024
     num_workers: 0
   data_conf:
-    n_jets: null
-    num_particles: 150
-    high_as_context: True
-    recalculate_jet_from_pc: False
-    log_squash_pt: False
-    jet_type:
-      - t 
-      - g
-      - q
-      - w
-      - z
-    jet_features:
-      - pt
-      - mass
+    jetnet_config:
+      jet_type:
+        - g
+        - q
+        - t
+        - w
+        - z
+      data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+      num_particles: 150
+      split_fraction: [0.6, 0.1, 0.3]
+      particle_features:
+        - etarel
+        - phirel
+        - ptrel
+      jet_features:
+        - pt
+        - mass
+        - type # Type must always be last if present
+
 model:
   epic_jedi_config:
     latent: 10

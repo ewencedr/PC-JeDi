@@ -1,24 +1,35 @@
 _target_: src.datamodules.jetnet.JetNetDataModule
 
 data_conf:
-  n_jets: null
-  high_as_context: True
-  recalculate_jet_from_pc: True
-  jet_type: t
-  data_dir: ${paths.data_dir}
-  num_particles: 30
-  split_fraction: [0.6, 0.1, 0.3]
-  particle_features:
-    - etarel
-    - phirel
-    - ptrel
-  jet_features:
-    - pt
-    - mass
   log_squash_pt: False
+  high_as_context: True
+  n_jets: null
+  one_hot_last: True
+  rotate_csts: False
+
+  jetnet_config:
+    jet_type:
+      - g
+      # - q
+      # - t
+      # - w
+      # - z
+    data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+    num_particles: 30
+    split_fraction: [0.6, 0.1, 0.3]
+    particle_features:
+      - etarel
+      - phirel
+      - ptrel
+    jet_features:
+      - pt
+      - eta
+      - mass
+      - num_particles # Needed for the transformer to be dependant on multiplicity
+      - type # Type must always be last if present
 
 loader_kwargs:
   pin_memory: true
   batch_size: 1024
-  num_workers: 0
+  num_workers: 8
   drop_last: True
