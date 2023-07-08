@@ -36,6 +36,7 @@ def main(cfg: DictConfig) -> None:
     datamodule = hydra.utils.instantiate(cfg.datamodule)
 
     log.info("Instantiating the model")
+    log.info(datamodule.ctxt_dim)
     model = hydra.utils.instantiate(
         cfg.model,
         pc_dim=datamodule.dim,

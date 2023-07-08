@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - override /model: epicjedi.yaml
+  - override /model: localepicjedi.yaml
 trainer:
   check_val_every_n_epoch: 50
   enable_progress_bar: False
@@ -8,17 +8,20 @@ trainer:
 # loggers: null
 # callbacks: null
 datamodule:
-  loader_kwargs:
-    batch_size: 1024
-    num_workers: 0
   data_conf:
+    log_squash_pt: False
+    high_as_context: True
+    n_jets: null
+    one_hot_last: True
+    rotate_csts: False
+
     jetnet_config:
       jet_type:
-        - g
-        - q
+        # - g
+        # - q
         - t
-        - w
-        - z
+        # - w
+        # - z
       data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
       num_particles: 150
       split_fraction: [0.6, 0.1, 0.3]
@@ -28,7 +31,9 @@ datamodule:
         - ptrel
       jet_features:
         - pt
+        # - eta
         - mass
+        # - num_particles # Needed for the transformer to be dependant on multiplicity
         - type # Type must always be last if present
 
 model:

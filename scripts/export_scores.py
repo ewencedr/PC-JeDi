@@ -29,13 +29,13 @@ def get_args() -> Namespace:
         "--num_eval_samples",
         type=int,
         help="Number of samples per batch in the bootsrapped evaluation methods.",
-        default=10000,
+        default=20000,
     )
     parser.add_argument(
         "--num_batches",
         type=int,
         help="Number of bootstrapped batches to evaluate.",
-        default=40,
+        default=16,
     )
     args = parser.parse_args()
     return args
