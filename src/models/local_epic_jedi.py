@@ -38,6 +38,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         ema_sync: float = 0.999,
         sampler_name: str = "em",
         sampler_steps: int = 100,
+        scheduler: partial= None,
     ) -> None:
 
         """
@@ -277,6 +278,14 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
             wandb.define_metric("valid/w1m", summary="min")
             wandb.define_metric("valid/w1p", summary="min")
             wandb.define_metric("valid/w1efp", summary="min")
+        
+        train_loader = self.trainer.datamodule.train_dataloader().dataset
+        csts = train_loader.csts
+        high = train_loader.high
+        mask = train_loader.mask
+
+        self.normaliser.fit(T.from_numpy(csts).to(self.device), T.from_numpy(mask).to(self.device))
+        self.ctxt_normaliser.fit(T.from_numpy(high).to(self.device))
 
     def set_sampler(
         self, sampler_name: Optional[str] = None, sampler_steps: Optional[int] = None
@@ -350,15 +359,11 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
             )
         )
 
-        etaphipt = gen_nodes.copy()
         etaphipt_frac = gen_nodes.copy()
+        etaphipt = gen_nodes.copy()
 
         # Undo the log_squash preprocessing
-        if self.trainer.datamodule.test_set.log_squash_pt:
-            etaphipt[..., -1] = undo_log_squash(gen_nodes[..., -1])
-            etaphipt_frac[..., -1] = etaphipt[..., -1] / pt.cpu().numpy()
-        else:
-            etaphipt[..., -1] *= pt.cpu().numpy()
+        etaphipt[..., -1] *= pt.cpu().numpy()
 
         # Return in a dict for standard combining later
         return {"etaphipt": etaphipt, "etaphipt_frac": etaphipt_frac}
@@ -369,7 +374,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
 
         # Finish initialising the optimiser and create the scheduler
         opt = self.hparams.optimizer(params=self.parameters())
-        sched = WarmupToConstant(opt, num_steps=20_000)
+        sched = self.hparams.scheduler(optimizer=opt)
 
         # Return the dict for the lightning trainer
         return {
