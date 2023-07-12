@@ -5,6 +5,20 @@ defaults:
   - paths: default.yaml
   - _self_
 
+datamodule:
+  _target_: src.datamodules.flow_gen.FlowGeneratedData
+  flow_path: /srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_flow_learning/top__pt_M_N__given__ID_150/
+  ctxt_vars:
+    - pt
+    - mass
+    - num_particles
+    - type
+  data_conf:
+    jet_type:
+      - t
+    num_particles: null
+  batch_size: 2048
+
 sampler_steps:
   # - 200
   - 200
@@ -19,6 +33,5 @@ sampler_name:
 
 load: last
 
-project_name: epic_jedi1_c
-network_name: null
-
+project_name: final_cedric_changes
+network_name: 2023-07-10_18-56-53-293584

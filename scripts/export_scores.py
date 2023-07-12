@@ -29,13 +29,13 @@ def get_args() -> Namespace:
         "--num_eval_samples",
         type=int,
         help="Number of samples per batch in the bootsrapped evaluation methods.",
-        default=20000,
+        default=50000,
     )
     parser.add_argument(
         "--num_batches",
         type=int,
         help="Number of bootstrapped batches to evaluate.",
-        default=16,
+        default=40,
     )
     args = parser.parse_args()
     return args
@@ -64,7 +64,7 @@ def main() -> None:
             jet_type=jets,
             data_dir="/srv/beegfs/scratch/groups/rodem/anomalous_jets/virtual_data",
             split="test",
-            split_fraction=[0.7, 0.0, 0.3],
+            split_fraction=[0.6, 0.1, 0.3],
             num_particles=num_particles,
             particle_features=["etarel", "phirel", "ptrel"],
             jet_features=["pt", "mass"],

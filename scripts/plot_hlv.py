@@ -27,11 +27,10 @@ sub_vars = [
     "pt",
 ]
 feat_spread_vars = ["tau21", "tau32", "d2", "mass"]
-plot_dir = "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/plots/30_constituents"
 
 num_const = 30
 project = "epic_jedi1_c"
-directory = "2023-06-17_13-02-33-464829"
+directory = "2023-06-17_13-02-33-405488"
 nbins = 50
 jet_types = ["t"]  # , "g", "q", "w", "z"]
 plot_dir = (

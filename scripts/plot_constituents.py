@@ -13,7 +13,7 @@ from src.plotting import plot_multi_hists_2, quantile_bins
 
 num_const = 30
 project = "epic_jedi1_c"
-directory = "2023-06-17_13-04-08-775952"
+directory = "2023-06-17_13-02-33-405488"
 nbins = 50
 jet_types = ["t"]  # , "g", "q", "w", "z"]
 plot_dir = (
@@ -42,6 +42,12 @@ all_data = [
         "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
         "file": "ddim_200",
         "hist_kwargs": {"color": "g"},
+    },
+    {
+        "label": f"EPiC-JeDi {num_const} DDIM 200",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
+        "file": "rk_50",
+        "hist_kwargs": {"color": "b"},
     },
     # {
     #     "label": "PC-JeDi 150 EM 200",

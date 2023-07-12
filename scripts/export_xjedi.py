@@ -33,8 +33,17 @@ def main(cfg: DictConfig) -> None:
     model = model_class.load_from_checkpoint(orig_cfg.ckpt_path)
 
     log.info("Instantiating the data module for the test set")
-    datamodule = hydra.utils.instantiate(orig_cfg.datamodule)
-    jet_type = datamodule.hparams.data_conf.jet_type[0]
+    if hasattr(cfg, "datamodule"):
+        cfg.datamodule.data_conf["num_particles"] = orig_cfg.datamodule.data_conf.jetnet_config.num_particles
+        log.info(f"Set number of particles to be the same as in the original config: {cfg.datamodule.data_conf.num_particles}")
+        datamodule = hydra.utils.instantiate(cfg.datamodule)
+    else:
+        datamodule = hydra.utils.instantiate(orig_cfg.datamodule)
+    try:
+        jet_type = datamodule.hparams.data_conf.jet_type[0]
+    except AttributeError:
+        jet_type = datamodule.data_conf.jet_type[0]
+    log.info(datamodule)
 
     log.info("Creating output directory.")
     outdir = Path("outputs") / jet_type
@@ -63,11 +72,14 @@ def main(cfg: DictConfig) -> None:
             log.info("Saving HDF files.")
 
             log.info("Saving seperate file for each jet type in test set")
-            jet_labels = datamodule.test_set.high[:, -1].astype("long")
-            jet_types = datamodule.jet_types()
+            try:
+                jet_labels = datamodule.test_set.high[:, -1].astype("long")
+            except AttributeError:
+                jet_labels = datamodule.high[:, -1].astype("long")
+            jet_types = ["g", "q","t","z","w"]
             for i, jet_type in enumerate(jet_types):
                 Path(f"outputs/{jet_type}").mkdir(exist_ok=True, parents=True)
-                with h5py.File(f"outputs/{jet_type}/f"{sampler}_{steps}.h5", mode="w") as file:
+                with h5py.File(f"outputs/{jet_type}/{sampler}_{steps}.h5", mode='w') as file:
                     for key in keys:
                         file.create_dataset(key, data=comb_dict[key][jet_labels == i])
 
