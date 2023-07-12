@@ -244,6 +244,42 @@ def euler_sampler(
 
     return x_t, all_stages
 
+@T.no_grad()
+def midpoint_sampler(
+    model,
+    diff_sched: VPDiffusionSchedule,
+    initial_noise: T.Tensor,
+    n_steps: int = 50,
+    keep_all: bool = False,
+    mask: Optional[T.Tensor] = None,
+    ctxt: Optional[T.BoolTensor] = None,
+    clip_predictions: Optional[tuple] = None,
+    ) -> Tuple[T.Tensor, list]:
+    """Apply the full reverse process to noise to generate a batch of samples"""
+
+    num_samples = initial_noise.shape[0]
+    expanded_shape = [-1] + [1] * (initial_noise.dim() - 1)
+    all_stages = []
+    delta_t = 1 / n_steps
+
+    t = T.ones(num_samples, device=model.device)
+    signal_rates, noise_rates = diff_sched(t.view(expanded_shape))
+    x_t = initial_noise * (signal_rates + noise_rates)
+
+    for step in tqdm(range(n_steps), "Midpoint-sampling", leave=False, disable=True):
+        x_halfstep += get_ode_gradient(model, diff_sched, x_t, t, mask, ctxt) * delta_t / 2
+        t_halfstep -= delta_t / 2
+        x_t += get_ode_gradient(model, diff_sched, x_halfstep, t_halfstep, mask, ctxt) * delta_t
+        t -= delta_t
+
+        if keep_all:
+            all_stages.append(x_t)
+        if clip_predictions is not None:
+            x_t.clamp_(*clip_predictions)
+    return x_t, all_stages
+
+
+
 
 @T.no_grad()
 def runge_kutta_sampler(
@@ -315,4 +351,7 @@ def run_sampler(sampler: str, *args, **kwargs) -> Tuple[T.Tensor, list]:
         return runge_kutta_sampler(*args, **kwargs)
     if sampler == "ddim":
         return ddim_sampler(*args, **kwargs)
-    raise RuntimeError(f"Unknown sampler: {sampler}")
+    if sampler == "midpoint":
+        return midpoint_sampler(*args, **kwargs)
+    else:
+        raise RuntimeError(f"Unknown sampler: {sampler}")
