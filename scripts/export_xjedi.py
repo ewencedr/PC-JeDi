@@ -32,8 +32,11 @@ def main(cfg: DictConfig) -> None:
     model_class = hydra.utils.get_class(orig_cfg.model._target_)
     model = model_class.load_from_checkpoint(orig_cfg.ckpt_path)
 
+    used_feats = orig_cfg.datamodule.data_conf.jetnet_config.jet_features if orig_cfg.datamodule.data_conf.high_as_context else []
     log.info("Instantiating the data module for the test set")
     if hasattr(cfg, "datamodule"):
+        cfg.datamodule["ctxt_vars"] = used_feats
+        cfg.datamodule.data_conf["one_hot"] = orig_cfg.datamodule.data_conf.one_hot_last
         cfg.datamodule.data_conf["num_particles"] = orig_cfg.datamodule.data_conf.jetnet_config.num_particles
         log.info(f"Set number of particles to be the same as in the original config: {cfg.datamodule.data_conf.num_particles}")
         datamodule = hydra.utils.instantiate(cfg.datamodule)
@@ -52,8 +55,16 @@ def main(cfg: DictConfig) -> None:
     log.info("Instantiating the trainer")
     orig_cfg.trainer["enable_progress_bar"] = True
     trainer = hydra.utils.instantiate(orig_cfg.trainer)
-
+    
+    jet_types = ["g","q","t","z","w"]
+    gen_jet_types = orig_cfg.datamodule.data_conf.jetnet_config.jet_type
+    label_dict = {l:i for i,l in enumerate(jet_types)}
     # Cycle through the sampler configurations
+    try:
+        jet_labels = datamodule.test_set.high[:, -1].astype("long")
+    except AttributeError:
+        jet_labels = datamodule.labels.astype("long")
+
     for steps in cfg.sampler_steps:
         for sampler in cfg.sampler_name:
             log.info("Setting up the generation paremeters")
@@ -72,16 +83,12 @@ def main(cfg: DictConfig) -> None:
             log.info("Saving HDF files.")
 
             log.info("Saving seperate file for each jet type in test set")
-            try:
-                jet_labels = datamodule.test_set.high[:, -1].astype("long")
-            except AttributeError:
-                jet_labels = datamodule.high[:, -1].astype("long")
-            jet_types = ["g", "q","t","z","w"]
+            
             for i, jet_type in enumerate(jet_types):
                 Path(f"outputs/{jet_type}").mkdir(exist_ok=True, parents=True)
-                with h5py.File(f"outputs/{jet_type}/{sampler}_{steps}.h5", mode='w') as file:
+                with h5py.File(f"outputs/{jet_type}/{sampler}_{steps}_csts.h5", mode='w') as file:
                     for key in keys:
-                        file.create_dataset(key, data=comb_dict[key][jet_labels == i])
+                        file.create_dataset(key, data=comb_dict[key][(jet_labels == i).squeeze()])
 
     print("Done!")
 

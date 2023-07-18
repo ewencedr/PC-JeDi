@@ -98,8 +98,8 @@ def main() -> None:
                 gen_nodes = f["etaphipt_frac"][:]
 
             # Fix the data by clipping
-            gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)
-            gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -0.5, 0.5)
+            gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -1.5, 1.5)
+            gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -1.0, 1.0)
             gen_nodes[..., 2] = np.clip(gen_nodes[..., 2], 0, 1.0)
 
             # Generate a mask for the nodes (should be identical to real_mask)
@@ -124,7 +124,10 @@ def main() -> None:
                     jet_type=jets,
                 )
             else:
-                fpnd_val = -999
+                sort_idx = np.argsort(gen_nodes[...,2], axis=-1)[..., None]
+                top_30 = np.take_along_axis(gen_nodes, sort_idx, axis=1)
+                top_30 = top_30[:, -30:]
+                fpnd_val = fpnd(top_30, jet_type=jet_type)
             print(f"FPND:  {fpnd_val:4.3E}")
 
             w1m_val, w1m_err = w1m(real_nodes, gen_nodes, **bootstrap)

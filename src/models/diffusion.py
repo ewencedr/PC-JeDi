@@ -267,8 +267,8 @@ def midpoint_sampler(
     x_t = initial_noise * (signal_rates + noise_rates)
 
     for step in tqdm(range(n_steps), "Midpoint-sampling", leave=False, disable=True):
-        x_halfstep += get_ode_gradient(model, diff_sched, x_t, t, mask, ctxt) * delta_t / 2
-        t_halfstep -= delta_t / 2
+        x_halfstep = x_t + get_ode_gradient(model, diff_sched, x_t, t, mask, ctxt) * delta_t / 2
+        t_halfstep = t - delta_t / 2
         x_t += get_ode_gradient(model, diff_sched, x_halfstep, t_halfstep, mask, ctxt) * delta_t
         t -= delta_t
 

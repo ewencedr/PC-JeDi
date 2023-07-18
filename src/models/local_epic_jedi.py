@@ -39,6 +39,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         sampler_name: str = "em",
         sampler_steps: int = 100,
         scheduler: partial= None,
+        eta_range: Tuple[float, float] = None,
     ) -> None:
 
         """
@@ -73,7 +74,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         # The encoder and scheduler needed for diffusion
         self.diff_sched = VPDiffusionSchedule(**diff_config)
         self.time_encoder = CosineEncoding(**cosine_config)
-
+        self.eta_range = eta_range
         # The layer which normalises the input point cloud data
         self.normaliser = IterativeNormLayer((pc_dim,), **normaliser_config)
         if self.ctxt_dim:
@@ -195,7 +196,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         all_high = np.vstack([v[1][2] for v in self.val_step_outs])
         all_pt = np.vstack([v[1][3] for v in self.val_step_outs])
         # Get all of the jet labels WHICH SHOULD BE LAST!
-        jet_labels = all_high[:, -1].astype("long")
+        jet_labels = (np.ones(len(all_high))*2).astype("long")
         # Cycle through each of the labels
         jet_types = ["g", "q", "t", "w", "z"]  # Fixed order based on jetnet
         for i, jet_type in enumerate(jet_types):
@@ -214,11 +215,11 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
                     real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / pt
                 # Apply clipping to prevent the values from causing issues in metrics
                 gen_nodes = np.nan_to_num(gen_nodes)
-                gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)
+                gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], self.eta_range[0], self.eta_range[1])
                 gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -0.5, 0.5)
                 gen_nodes[..., 2] = np.clip(gen_nodes[..., 2], 0, 1)
                 real_nodes = np.nan_to_num(real_nodes)
-                real_nodes[..., 0] = np.clip(real_nodes[..., 0], -0.5, 0.5)
+                real_nodes[..., 0] = np.clip(real_nodes[..., 0], self.eta_range[0], self.eta_range[1])
                 real_nodes[..., 1] = np.clip(real_nodes[..., 1], -0.5, 0.5)
                 real_nodes[..., 2] = np.clip(real_nodes[..., 2], 0, 1)
         # Calculate and log the Wasserstein discriminants
@@ -285,7 +286,8 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         mask = train_loader.mask
 
         self.normaliser.fit(T.from_numpy(csts).to(self.device), T.from_numpy(mask).to(self.device))
-        self.ctxt_normaliser.fit(T.from_numpy(high).to(self.device))
+        if self.ctxt_dim:
+            self.ctxt_normaliser.fit(T.from_numpy(high).to(self.device))
 
     def set_sampler(
         self, sampler_name: Optional[str] = None, sampler_steps: Optional[int] = None
@@ -320,7 +322,9 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         if self.ctxt_dim:
             ctxt = self.ctxt_normaliser(ctxt)
             assert len(ctxt) == len(initial_noise)
-
+        else:
+            ctxt = None
+            
         # Run the sampling method
         outputs, _ = run_sampler(
             sampler,

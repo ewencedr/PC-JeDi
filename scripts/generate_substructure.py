@@ -36,7 +36,7 @@ def get_args() -> Namespace:
     parser.add_argument(
         "--file_names",
         type=str,
-        default="ddim_200.h5,em_200.h5,euler_200.h5,rk_50.h5",
+        default="ddim_200_csts.h5,em_200_csts.h5,euler_200_csts.h5,rk_50_csts.h5,midpoint_50_csts.h5,midpoint_200_csts.h5,ddim_200_csts.h5,em_100_csts.h5,euler_100_csts.h5",
         help="Comma separated names of the files to generate from.",
     )
     args = parser.parse_args()
@@ -61,11 +61,11 @@ def main():
                 gen_nodes = f["etaphipt"][:]
 
             # Clip the eta and phi values for stability
-            gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -0.5, 0.5)
-            gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -0.5, 0.5)
+            gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], -1.5, 1.5)
+            gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -1.0, 1.0)
 
             # Save the substructure variables in the same folder with an added suffix
-            outpath = path / jet_type / (file_path.stem + "_substructure.h5")
+            outpath = path / jet_type / file_path.stem.replace("csts", "substructure.h5")
             dump_hlvs(gen_nodes, outpath, plot=True)
 
 

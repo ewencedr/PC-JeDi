@@ -405,13 +405,14 @@ def plot_multi_hists_2(
     logy: bool = False,
     y_label: Optional[str] = None,
     ylim: Optional[list] = None,
+    ypad: float = 1.5,
     rat_ylim: tuple = (0, 2),
     rat_label: Optional[str] = None,
     scale: int = 5,
     do_legend: bool = True,
     hist_kwargs: Optional[list] = None,
     err_kwargs: Optional[list] = None,
-    legend_kwargs: Optional[dict] = None,
+    legend_kwargs: Optional[list] = None,
     extra_text: Optional[list] = None,
     incl_overflow: bool = True,
     incl_underflow: bool = True,
@@ -438,6 +439,7 @@ def plot_multi_hists_2(
         logy: If we should use the log in the y-axis
         y_label: Label for the y axis of the plots
         ylim: The y limits for all plots
+        ypad: The amount by which to pad the whitespace above the plots
         rat_ylim: The y limits of the ratio plots
         rat_label: The label for the ratio plot
         scale: The size in inches for each subplot
@@ -470,6 +472,8 @@ def plot_multi_hists_2(
         err_kwargs = len(data_list) * [err_kwargs]
     if not isinstance(extra_text, list):
         extra_text = len(col_labels) * [extra_text]
+    if not isinstance(legend_kwargs, list):
+        legend_kwargs = len(col_labels) * [legend_kwargs]
 
     # Cycle through the datalist and ensure that they are 2D, as each column is an axis
     for data_idx in range(len(data_list)):
@@ -520,7 +524,7 @@ def plot_multi_hists_2(
                 ax_bins = np.append(ax_bins, unq.max() + unq.max() - ax_bins[-1])
                 ax_bins = np.insert(ax_bins, 0, unq.min() + unq.min() - ax_bins[0])
 
-            if ax_bins == "quant":
+            elif ax_bins == "quant":
                 ax_bins = quantile_bins(data_list[0][:, ax_idx])
 
         # Numpy function to get the bin edges, catches all other cases (int, etc)
@@ -547,7 +551,7 @@ def plot_multi_hists_2(
             if data.ndim > 1:
                 h = []
                 for dim in range(data.shape[-1]):
-                    h.append(np.histogram(data[:, dim], ax_bins, density=do_norm)[0])
+                    h.append(np.histogram(data[:, dim], ax_bins)[0])
 
                 # Nominal and err is based on chi2 of same value, mult measurements
                 hist = 1 / np.mean(1 / np.array(h), axis=0)
@@ -555,13 +559,14 @@ def plot_multi_hists_2(
 
             # Otherwise just calculate a single histogram
             else:
-                hist, _ = np.histogram(data, ax_bins, density=do_norm)
-                if do_norm:
-                    full_hist = np.histogram(data, ax_bins)[0]
-                    ratio = full_hist / hist
-                    hist_err = np.sqrt(full_hist) / ratio
-                else:
-                    hist_err = np.sqrt(hist)
+                hist, _ = np.histogram(data, ax_bins)
+                hist_err = np.sqrt(hist)
+
+            # Manually do the density so that the error can be scaled
+            if do_norm:
+                divisor = np.array(np.diff(ax_bins), float) / hist.sum()
+                hist = hist * divisor
+                hist_err = hist_err * divisor
 
             # Apply the scale factors
             if scale_factors[data_idx] is not None:
@@ -652,9 +657,12 @@ def plot_multi_hists_2(
         else:
             _, ylim2 = axes[0, ax_idx].get_ylim()
             if logy:
-                axes[0, ax_idx].set_ylim(top=10 ** (np.log10(ylim2) * 1.40))
+                ylim_exp = np.floor(np.log10(ylim2))
+                ylim_pad = ylim_exp + ypad*np.abs(ylim_exp)
+                ylim2 = 10**ylim2
+                axes[0, ax_idx].set_ylim(top=ylim2)
             else:
-                axes[0, ax_idx].set_ylim(top=ylim2 * 1.35)
+                axes[0, ax_idx].set_ylim(top=ylim2 * ypad)
         if y_label is not None:
             axes[0, ax_idx].set_ylabel(y_label)
         elif do_norm:
@@ -664,11 +672,17 @@ def plot_multi_hists_2(
 
         # Ratio Y axis
         if do_ratio_to_first:
-            axes[1, ax_idx].set_ylim(rat_ylim)
+            if rat_ylim is not None:
+                axes[1, ax_idx].set_ylim(rat_ylim)
             if rat_label is not None:
                 axes[1, ax_idx].set_ylabel(rat_label)
             else:
                 axes[1, ax_idx].set_ylabel(f"Ratio to {data_labels[0]}")
+
+            # Ratio X line:
+            axes[1, ax_idx].hlines(
+                1, *axes[1, ax_idx].get_xlim(), colors="k", zorder=-9999
+            )
 
         # Extra text
         if extra_text[ax_idx] is not None:
@@ -676,8 +690,8 @@ def plot_multi_hists_2(
 
         # Legend
         if do_legend:
-            legend_kwargs = legend_kwargs or {}
-            axes[0, ax_idx].legend(**legend_kwargs)
+            lk = legend_kwargs[ax_idx] or {}
+            axes[0, ax_idx].legend(**lk)
 
     # Final figure layout
     fig.tight_layout()

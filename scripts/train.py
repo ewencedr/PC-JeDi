@@ -35,6 +35,8 @@ def main(cfg: DictConfig) -> None:
     log.info("Instantiating the data module")
     datamodule = hydra.utils.instantiate(cfg.datamodule)
 
+    num_particles = datamodule.hparams.data_conf.jetnet_config.num_particles
+    eta_range = [-0.999, 0.94] if num_particles == 30 else [-1.6, 1.0]
     log.info("Instantiating the model")
     log.info(datamodule.ctxt_dim)
     model = hydra.utils.instantiate(
@@ -42,8 +44,9 @@ def main(cfg: DictConfig) -> None:
         pc_dim=datamodule.dim,
         n_nodes=datamodule.n_nodes,
         ctxt_dim=datamodule.ctxt_dim,
+        eta_range=eta_range,
     )
-    log.info(model)
+    # log.info(model)
 
     log.info("Instantiating all callbacks")
     callbacks = instantiate_collection(cfg.callbacks)

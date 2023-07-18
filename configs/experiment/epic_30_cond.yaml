@@ -12,7 +12,7 @@ datamodule:
     log_squash_pt: False
     high_as_context: True
     n_jets: null
-    one_hot_last: True
+    one_hot_last: False
     rotate_csts: False
 
     jetnet_config:
@@ -34,7 +34,7 @@ datamodule:
         # - eta
         - mass
         # - num_particles # Needed for the transformer to be dependant on multiplicity
-        - type # Type must always be last if present
+        # - type # Type must always be last if present
 model:
   epic_jedi_config:
     latent: 10

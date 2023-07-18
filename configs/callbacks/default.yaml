@@ -16,3 +16,7 @@ early_stopping:
 lr_monitor:
   _target_: pytorch_lightning.callbacks.LearningRateMonitor
   logging_interval: step
+
+model_summary:
+  _target_: pytorch_lightning.callbacks.ModelSummary
+  max_depth: 4

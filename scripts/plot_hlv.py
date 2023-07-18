@@ -44,22 +44,34 @@ if not Path(plot_dir).exists():
 all_data = [
     {
         "label": "MC",
-        "path": "/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/jetnet_data",
-        "file": f"jetnet_data_{num_const}",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/jetnet_data/jetnet_data_{num_const}",
+        "file": f"jetnet_data_test",
         "hist_kwargs": {"color": "tab:blue", "fill": True, "alpha": 0.3},
         "err_kwargs": {"color": "tab:blue", "hatch": "///"},
     },
     {
         "label": f"EPiC-JeDi {num_const} EM 200",
         "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
-        "file": "em_200",
+        "file": "em_200_csts",
         "hist_kwargs": {"color": "r"},
     },
     {
         "label": f"EPiC-JeDi {num_const} DDIM 200",
         "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
-        "file": "ddim_200",
+        "file": "ddim_200_csts",
         "hist_kwargs": {"color": "g"},
+    },
+    # {
+    #     "label": f"EPiC-JeDi {num_const} Midpoint 50",
+    #     "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
+    #     "file": "midpoint_50_csts",
+    #     "hist_kwargs": {"color": "b"},
+    # },
+    {
+        "label": f"EPiC-JeDi {num_const} Midpoint 200",
+        "path": f"/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/{project}/{directory}",
+        "file": "midpoint_200_csts",
+        "hist_kwargs": {"color": "b", "ls": "--"},
     },
     # {
     #     "label": "PC-JeDi 150 EM 200",
@@ -75,6 +87,7 @@ all_data = [
     # },
 ]
 all_data = [DotMap(**d) for d in all_data]
+
 
 # Cycle through the jet types and variables and make each plot
 for jet_type in jet_types:
