@@ -9,6 +9,7 @@ import logging
 
 import h5py
 import hydra
+import pandas as pd
 import numpy as np
 import torch
 import yaml
@@ -92,7 +93,8 @@ def main(cfg: DictConfig) -> None:
                 log.info(f"Steps: {steps}")
                 log.info("Running the prediction loop")
                 times_temp = []
-                datamodule.batch_size = 270000  # 50000, 80000, 140000, 270000, 270000
+                bs = {"10": 270000, "30": 270000, "60": 140000, "100": 80000, "150": 50000}
+                datamodule.batch_size = bs[f"{num_part}"]
                 for run in range(2):
                     log.info(f"RUN ---- {run} ----")
                     gen_time_track = time.time()
@@ -110,6 +112,7 @@ def main(cfg: DictConfig) -> None:
                 solver.append(sampler)
                 n_particles.append(num_part)
                 samples.append(comb_dict[keys[0]].shape[0])
+                batch_sizes.append(bs[f"{num_part}"])
 
                 log.info("Saving seperate file for each jet type in test set")
 
@@ -128,6 +131,18 @@ def main(cfg: DictConfig) -> None:
         print(f"times_std: {times_std}")
         print(f"solver: {solver}")
         print(f"n_particles: {n_particles}")
+        print(f"samples: {samples}")
+        print(f"batch_sizes: {batch_sizes}")
+        dic = {
+            "solver": solver,
+            "samples": samples,
+            "n_particles": n_particles,
+            "times_mean": times_mean,
+            "times_std": times_std,
+            "batch_sizes": batch_sizes,
+        }
+        df = pd.DataFrame(data=dic)
+        df.to_csv(Path("outputs") / "times.csv")
 
 
 if __name__ == "__main__":
