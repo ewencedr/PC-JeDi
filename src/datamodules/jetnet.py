@@ -47,7 +47,6 @@ class JetNetData(Dataset):
         rotate_csts: bool = False,
         split: str = "train",
     ) -> None:
-
         # Save the class attributes
         self.log_squash_pt = log_squash_pt
         self.high_as_context = high_as_context
@@ -147,9 +146,7 @@ class JetNetDataModule(LightningDataModule):
         self.dim = len(data_conf.jetnet_config.particle_features)
         self.n_nodes = data_conf.jetnet_config.num_particles
         if data_conf.high_as_context:
-            self.ctxt_dim = (
-                len(data_conf.jetnet_config.jet_features) + 5 * data_conf.one_hot_last
-            )
+            self.ctxt_dim = len(data_conf.jetnet_config.jet_features) + 5 * data_conf.one_hot_last
         else:
             self.ctxt_dim = 0
 
@@ -165,15 +162,19 @@ class JetNetDataModule(LightningDataModule):
             self.test_set = JetNetData(**self.hparams.data_conf, split="test")
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_set, **self.hparams.loader_kwargs, shuffle=True)
+        return DataLoader(
+            self.train_set, **self.hparams.loader_kwargs, shuffle=True, num_workers=128
+        )
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.valid_set, **self.hparams.loader_kwargs, shuffle=False)
+        return DataLoader(
+            self.valid_set, **self.hparams.loader_kwargs, shuffle=False, num_workers=128
+        )
 
     def test_dataloader(self) -> DataLoader:
         test_kwargs = deepcopy(self.hparams.loader_kwargs)
         test_kwargs["drop_last"] = False
-        return DataLoader(self.test_set, **test_kwargs, shuffle=False)
+        return DataLoader(self.test_set, **test_kwargs, shuffle=False, num_workers=128)
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
