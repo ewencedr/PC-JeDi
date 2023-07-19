@@ -73,13 +73,13 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         "--jetdiff-model-dir",
         type=str,
-        default="/srv/beegfs/scratch/users/s/senguptd/jet_diffusion/epic_jedi1_c",
+        default="/beegfs/desy/user/ewencedr/pc-jedi/logs/epic_debug",
         help="Path to directory where the model and its checkpoints are saved.",
     )
     parser.add_argument(
         "--jetdiff-model-name",
         type=str,
-        default="2023-06-06_15-48-57-904902",
+        default="2023-07-18_18-10-03-392032",
         help="Name of the model to load for generation.",
     )
 
@@ -89,9 +89,7 @@ def get_args() -> argparse.Namespace:
 
 
 def find_best_checkpoint(model_path: str) -> str:
-    return str(
-        sorted(Path(model_path, "checkpoints").glob("*.ckpt"), key=os.path.getmtime)[-1]
-    )
+    return str(sorted(Path(model_path, "checkpoints").glob("*.ckpt"), key=os.path.getmtime)[-1])
 
 
 def main() -> None:
@@ -118,16 +116,10 @@ def main() -> None:
     # Create the dummy input and calculate
     noise = T.randn((1, num_const, 3)).to("cpu")
     context = T.randn((1, context_dim)).to("cpu") if context_dim > 0 else None
-    mean_cpu_forward, std_cpu_forward = foward_time(
-        model.to("cpu"), noise, context=context, n=n
-    )
+    mean_cpu_forward, std_cpu_forward = foward_time(model.to("cpu"), noise, context=context, n=n)
     print(f"CPU: Forward pass {mean_cpu_forward:33.2f} +- {std_cpu_forward:.2f} ms")
-    mean_cpu_fullgen, std_cpu_fullgen = full_gen_time(
-        model.to("cpu"), noise, context=context, n=n
-    )
-    print(
-        f"CPU: Full Generate (200 steps) {mean_cpu_fullgen:20.2f} +- {std_cpu_fullgen:.2f} ms"
-    )
+    mean_cpu_fullgen, std_cpu_fullgen = full_gen_time(model.to("cpu"), noise, context=context, n=n)
+    print(f"CPU: Full Generate (200 steps) {mean_cpu_fullgen:20.2f} +- {std_cpu_fullgen:.2f} ms")
 
     # Move the the test to the gpu
     model = model.to("cuda")
@@ -135,25 +127,15 @@ def main() -> None:
     context = context.to("cuda")
     mean_gpu_forward, std_gpu_forward = foward_time(model, noise, context=context, n=n)
     print(f"GPU: Forward pass {mean_gpu_forward:33.2f} +- {std_gpu_forward:.2f} ms")
-    mean_gpu_fullgen, std_gpu_fullgen = full_gen_time(
-        model, noise, context=context, n=n
-    )
-    print(
-        f"GPU: Full Generate (200 steps) {mean_gpu_fullgen:20.2f} +- {std_gpu_fullgen:.2f} ms"
-    )
+    mean_gpu_fullgen, std_gpu_fullgen = full_gen_time(model, noise, context=context, n=n)
+    print(f"GPU: Full Generate (200 steps) {mean_gpu_fullgen:20.2f} +- {std_gpu_fullgen:.2f} ms")
 
     # Perform a batch test of 10 samples
     noise = T.randn((10, num_const, 3)).to("cuda")
     context = T.randn((10, context_dim)).to("cuda") if context_dim > 0 else None
-    mean_gpu_forward10, std_gpu_forward10 = foward_time(
-        model, noise, context=context, n=n
-    )
-    print(
-        f"GPU: 10 batch, Forward pass {mean_gpu_forward10:23.2f} +- {std_gpu_forward10:.2f} ms"
-    )
-    mean_gpu_fullgen10, std_gpu_fullgen10 = full_gen_time(
-        model, noise, context=context, n=n
-    )
+    mean_gpu_forward10, std_gpu_forward10 = foward_time(model, noise, context=context, n=n)
+    print(f"GPU: 10 batch, Forward pass {mean_gpu_forward10:23.2f} +- {std_gpu_forward10:.2f} ms")
+    mean_gpu_fullgen10, std_gpu_fullgen10 = full_gen_time(model, noise, context=context, n=n)
     print(
         f"GPU: 10 batch, Full Generate (200 steps) {mean_gpu_fullgen10:10.2f} +- {std_gpu_fullgen10:.2f} ms"
     )
@@ -161,15 +143,11 @@ def main() -> None:
     # Perform a batch test of 1000 samples
     noise = T.randn((1000, num_const, 3)).to("cuda")
     context = T.randn((1000, context_dim)).to("cuda") if context_dim > 0 else None
-    mean_gpu_forward1000, std_gpu_forward1000 = foward_time(
-        model, noise, context=context, n=n
-    )
+    mean_gpu_forward1000, std_gpu_forward1000 = foward_time(model, noise, context=context, n=n)
     print(
         f"GPU: 1000 batch, Forward pass {mean_gpu_forward1000:21.2f} +- {std_gpu_forward1000:.2f} ms"
     )
-    mean_gpu_fullgen1000, std_fullgen1000 = full_gen_time(
-        model, noise, context=context, n=n
-    )
+    mean_gpu_fullgen1000, std_fullgen1000 = full_gen_time(model, noise, context=context, n=n)
     print(
         f"GPU: 1000 batch, Full Generate (200 steps) {mean_gpu_fullgen1000:8.2f} +- {std_fullgen1000:.2f} ms"
     )
