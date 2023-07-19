@@ -28,7 +28,8 @@ def main(cfg: DictConfig) -> None:
     n_particles = []
     samples = []
     batch_sizes = []
-    for num_part in [30]:  # [10, 30, 60, 100, 150]:
+    num_runs = 10
+    for num_part in [10, 30, 60, 100, 150]:  # [10, 30, 60, 100, 150]:
         torch.set_float32_matmul_precision("medium")
         log.info("Loading run information")
         orig_cfg = reload_original_config(cfg, get_best=cfg.load)
@@ -95,7 +96,7 @@ def main(cfg: DictConfig) -> None:
                 times_temp = []
                 bs = {"10": 270000, "30": 270000, "60": 140000, "100": 80000, "150": 50000}
                 datamodule.batch_size = bs[f"{num_part}"]
-                for run in range(2):
+                for run in range(num_runs):
                     log.info(f"RUN ---- {run} ----")
                     gen_time_track = time.time()
                     outputs = trainer.predict(model=model, datamodule=datamodule)
