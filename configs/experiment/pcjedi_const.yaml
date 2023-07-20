@@ -22,7 +22,7 @@ datamodule:
         - t
         # - w
         # - z
-      data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+      data_dir: /beegfs/desy/user/ewencedr/data/
       num_particles: 30
       split_fraction: [0.6, 0.1, 0.3]
       particle_features:

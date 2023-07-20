@@ -70,7 +70,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         # The encoder and scheduler needed for diffusion
         self.diff_sched = VPDiffusionSchedule(**diff_config)
         self.time_encoder = CosineEncoding(**cosine_config)
-
+        self.eta_range = eta_range
         # The layer which normalises the input point cloud data
         self.normaliser = IterativeNormLayer((pc_dim,), **normaliser_config)
         if self.ctxt_dim:
@@ -92,7 +92,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         self.sampler_steps = sampler_steps
 
         # Record of the outputs of the validation step
-        self.val_outs = []
+        self.val_step_outs = []
 
     def forward(
         self,
