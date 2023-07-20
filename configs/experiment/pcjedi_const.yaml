@@ -4,29 +4,36 @@ defaults:
 trainer:
   check_val_every_n_epoch: 50
   enable_progress_bar: True
-    
+
 # loggers: null
 # callbacks: null
 datamodule:
-  loader_kwargs:
-    batch_size: 1024
-    num_workers: 0
   data_conf:
-    n_jets: null
-    num_particles: 150
-    high_as_context: True
     log_squash_pt: False
-    recalculate_jet_from_pc: False
-    jet_type:
-      - t
-    jet_features:
-     - pt
-     - mass
-    #   - num_particles
-      # - g
-      # - q
-      # - w
-      # - z
+    high_as_context: True
+    n_jets: null
+    one_hot_last: False
+    rotate_csts: False
 
-project_name: epic_jedi1 # Determines output directory path and wandb project
+    jetnet_config:
+      jet_type:
+        # - g
+        # - q
+        - t
+        # - w
+        # - z
+      data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+      num_particles: 30
+      split_fraction: [0.6, 0.1, 0.3]
+      particle_features:
+        - etarel
+        - phirel
+        - ptrel
+      jet_features:
+        - pt
+        # - eta
+        - mass
+        # - num_particles # Needed for the transformer to be dependant on multiplicity
+        # - type # Type must always be last if present
+project_name: pc_jedi # Determines output directory path and wandb project
 network_name: ${now:%Y-%m-%d}_${now:%H-%M-%S-%f}

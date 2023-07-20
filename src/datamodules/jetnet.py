@@ -117,6 +117,7 @@ class JetNetData(Dataset):
             else self.kwargs_copy["jet_features"],
             do_norm=True,
             path=plot_path / "high",
+            
         )
 
         plot_multi_hists_2(
