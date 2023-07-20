@@ -36,6 +36,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         ema_sync: float = 0.999,
         sampler_name: str = "em",
         sampler_steps: int = 100,
+        eta_range: Tuple[float, float] = (-0.5, 0.5),
     ) -> None:
         """
         Args:
@@ -242,12 +243,9 @@ class TransformerDiffusionGenerator(pl.LightningModule):
     def _sync_ema_network(self) -> None:
         """Updates the Exponential Moving Average Network."""
         with T.no_grad():
-            for params, ema_params in zip(
-                self.net.parameters(), self.ema_net.parameters()
-            ):
+            for params, ema_params in zip(self.net.parameters(), self.ema_net.parameters()):
                 ema_params.data.copy_(
-                    self.ema_sync * ema_params.data
-                    + (1.0 - self.ema_sync) * params.data
+                    self.ema_sync * ema_params.data + (1.0 - self.ema_sync) * params.data
                 )
 
     def on_fit_start(self, *_args) -> None:
