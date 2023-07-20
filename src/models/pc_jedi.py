@@ -36,6 +36,7 @@ class TransformerDiffusionGenerator(pl.LightningModule):
         ema_sync: float = 0.999,
         sampler_name: str = "em",
         sampler_steps: int = 100,
+        eta_range: Tuple[float, float] = (-0.5, 0.5),
     ) -> None:
         """
         Args:
