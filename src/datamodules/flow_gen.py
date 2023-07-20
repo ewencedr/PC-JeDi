@@ -83,6 +83,4 @@ class FlowGeneratedData(LightningDataModule):
         )
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.test_set, batch_size=self.batch_size, pin_memory=True, num_workers=128
-        )
+        return DataLoader(self.test_set, batch_size=self.batch_size, pin_memory=True)

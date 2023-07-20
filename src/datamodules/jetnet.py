@@ -162,19 +162,15 @@ class JetNetDataModule(LightningDataModule):
             self.test_set = JetNetData(**self.hparams.data_conf, split="test")
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.train_set, **self.hparams.loader_kwargs, shuffle=True, num_workers=128
-        )
+        return DataLoader(self.train_set, **self.hparams.loader_kwargs, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.valid_set, **self.hparams.loader_kwargs, shuffle=False, num_workers=128
-        )
+        return DataLoader(self.valid_set, **self.hparams.loader_kwargs, shuffle=False)
 
     def test_dataloader(self) -> DataLoader:
         test_kwargs = deepcopy(self.hparams.loader_kwargs)
         test_kwargs["drop_last"] = False
-        return DataLoader(self.test_set, **test_kwargs, shuffle=False, num_workers=128)
+        return DataLoader(self.test_set, **test_kwargs, shuffle=False)
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
