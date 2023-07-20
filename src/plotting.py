@@ -405,7 +405,7 @@ def plot_multi_hists_2(
     logy: bool = False,
     y_label: Optional[str] = None,
     ylim: Optional[list] = None,
-    ypad: float = 1.5,
+    ypad: list = [0.0],
     rat_ylim: tuple = (0, 2),
     rat_label: Optional[str] = None,
     scale: int = 5,
@@ -474,6 +474,8 @@ def plot_multi_hists_2(
         extra_text = len(col_labels) * [extra_text]
     if not isinstance(legend_kwargs, list):
         legend_kwargs = len(col_labels) * [legend_kwargs]
+    if (ypad is None) or len(ypad) != len(col_labels):
+        ypad = [0.0]*len(col_labels)
 
     # Cycle through the datalist and ensure that they are 2D, as each column is an axis
     for data_idx in range(len(data_list)):
@@ -658,11 +660,11 @@ def plot_multi_hists_2(
             _, ylim2 = axes[0, ax_idx].get_ylim()
             if logy:
                 ylim_exp = np.floor(np.log10(ylim2))
-                ylim_pad = ylim_exp + ypad*np.abs(ylim_exp)
+                ylim_pad = ylim_exp + ypad[ax_idx]*np.abs(ylim_exp)
                 ylim2 = 10**ylim2
                 axes[0, ax_idx].set_ylim(top=ylim2)
             else:
-                axes[0, ax_idx].set_ylim(top=ylim2 * ypad)
+                axes[0, ax_idx].set_ylim(top=ylim2 * (ypad[ax_idx]+1))
         if y_label is not None:
             axes[0, ax_idx].set_ylabel(y_label)
         elif do_norm:
