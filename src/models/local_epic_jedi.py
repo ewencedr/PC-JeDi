@@ -38,10 +38,9 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         ema_sync: float = 0.999,
         sampler_name: str = "em",
         sampler_steps: int = 100,
-        scheduler: partial= None,
+        scheduler: partial = None,
         eta_range: Tuple[float, float] = None,
     ) -> None:
-
         """
         Args:
             pc_dim: The dimension of the point cloud
@@ -79,7 +78,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         self.normaliser = IterativeNormLayer((pc_dim,), **normaliser_config)
         if self.ctxt_dim:
             self.ctxt_normaliser = IterativeNormLayer((ctxt_dim,), **normaliser_config)
-        
+
         net_cond_dim = cosine_config["outp_dim"] + ctxt_dim
         epic_jedi_config["feats"] = self.pc_dim
         epic_jedi_config["cond_dim"] = net_cond_dim
@@ -186,20 +185,19 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
         self.val_step_outs.append((to_np(outputs), to_np(sample)))
 
     def on_validation_epoch_end(self) -> None:
-       
-       """Plot histograms of fully generated samples from the validation
+        """Plot histograms of fully generated samples from the validation
         epoch."""
-       if self.trainer.is_global_zero:
-        all_gen_nodes = np.vstack([v[0] for v in self.val_step_outs])
-        all_real_nodes = np.vstack([v[1][0] for v in self.val_step_outs])
-        all_mask = np.vstack([v[1][1] for v in self.val_step_outs])
-        all_high = np.vstack([v[1][2] for v in self.val_step_outs])
-        all_pt = np.vstack([v[1][3] for v in self.val_step_outs])
-        # Get all of the jet labels WHICH SHOULD BE LAST!
-        jet_labels = (np.ones(len(all_high))*2).astype("long")
-        # Cycle through each of the labels
-        jet_types = ["g", "q", "t", "w", "z"]  # Fixed order based on jetnet
-        for i, jet_type in enumerate(jet_types):
+        if self.trainer.is_global_zero:
+            all_gen_nodes = np.vstack([v[0] for v in self.val_step_outs])
+            all_real_nodes = np.vstack([v[1][0] for v in self.val_step_outs])
+            all_mask = np.vstack([v[1][1] for v in self.val_step_outs])
+            all_high = np.vstack([v[1][2] for v in self.val_step_outs])
+            all_pt = np.vstack([v[1][3] for v in self.val_step_outs])
+            # Get all of the jet labels WHICH SHOULD BE LAST!
+            jet_labels = (np.ones(len(all_high)) * 2).astype("long")
+            # Cycle through each of the labels
+            jet_types = ["g", "q", "t", "w", "z"]  # Fixed order based on jetnet
+            for i, jet_type in enumerate(jet_types):
                 # Pull out the events in the validation dataset matching the jet type
                 matching_idx = jet_labels == i
                 gen_nodes = all_gen_nodes[matching_idx]
@@ -215,14 +213,18 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
                     real_nodes[..., -1] = undo_log_squash(real_nodes[..., -1]) / pt
                 # Apply clipping to prevent the values from causing issues in metrics
                 gen_nodes = np.nan_to_num(gen_nodes)
-                gen_nodes[..., 0] = np.clip(gen_nodes[..., 0], self.eta_range[0], self.eta_range[1])
+                gen_nodes[..., 0] = np.clip(
+                    gen_nodes[..., 0], self.eta_range[0], self.eta_range[1]
+                )
                 gen_nodes[..., 1] = np.clip(gen_nodes[..., 1], -0.5, 0.5)
                 gen_nodes[..., 2] = np.clip(gen_nodes[..., 2], 0, 1)
                 real_nodes = np.nan_to_num(real_nodes)
-                real_nodes[..., 0] = np.clip(real_nodes[..., 0], self.eta_range[0], self.eta_range[1])
+                real_nodes[..., 0] = np.clip(
+                    real_nodes[..., 0], self.eta_range[0], self.eta_range[1]
+                )
                 real_nodes[..., 1] = np.clip(real_nodes[..., 1], -0.5, 0.5)
                 real_nodes[..., 2] = np.clip(real_nodes[..., 2], 0, 1)
-        # Calculate and log the Wasserstein discriminants
+                # Calculate and log the Wasserstein discriminants
                 bootstrap = {
                     "num_eval_samples": 10000,
                     "num_batches": 10,
@@ -236,7 +238,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
                 self.log("valid/w1p_err", w1p_err.mean())
                 self.log("valid/w1efp", w1efp_val.mean())
                 self.log("valid/w1efp_err", w1efp_err.mean())
-                
+
                 # Calculate the FPND metric which is only valid for some jets with 30 csts
                 if jet_type in ["g", "t", "q"]:
                     if gen_nodes.shape[-2] > 30:
@@ -251,18 +253,15 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
                 plot_mpgan_marginals(
                     gen_nodes, real_nodes, mask, self.trainer.current_epoch, jet_type
                 )
-       self.trainer.strategy.barrier()
-       self.val_step_outs.clear()
+        self.trainer.strategy.barrier()
+        self.val_step_outs.clear()
 
     def _sync_ema_network(self) -> None:
         """Updates the Exponential Moving Average Network."""
         with T.no_grad():
-            for params, ema_params in zip(
-                self.net.parameters(), self.ema_net.parameters()
-            ):
+            for params, ema_params in zip(self.net.parameters(), self.ema_net.parameters()):
                 ema_params.data.copy_(
-                    self.ema_sync * ema_params.data
-                    + (1.0 - self.ema_sync) * params.data
+                    self.ema_sync * ema_params.data + (1.0 - self.ema_sync) * params.data
                 )
 
     def on_fit_start(self, *_args) -> None:
@@ -279,7 +278,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
             wandb.define_metric("valid/w1m", summary="min")
             wandb.define_metric("valid/w1p", summary="min")
             wandb.define_metric("valid/w1efp", summary="min")
-        
+
         train_loader = self.trainer.datamodule.train_dataloader().dataset
         csts = train_loader.csts
         high = train_loader.high
@@ -324,7 +323,7 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
             assert len(ctxt) == len(initial_noise)
         else:
             ctxt = None
-            
+
         # Run the sampling method
         outputs, _ = run_sampler(
             sampler,
@@ -352,6 +351,16 @@ class LocalEpicDiffusionGenerator(pl.LightningModule):
 
         # Unpack the sample tuple (dont need constituents)
         _, mask, ctxt, pt = sample
+        # ugly hardcoded but it is just for the timing study
+        # print(f"len of mask: {len(mask)}")
+        # print(f"mask: {mask}")
+        # print(f"count nonzero max: {np.max(np.count_nonzero(mask.cpu().numpy(), axis=1))}")
+        # print(f"count nonzero min: {np.min(np.count_nonzero(mask.cpu().numpy(), axis=1))}")
+        # Generate with fixed point size - used for the timing study
+        mask = T.ones(mask.shape, device=self.device, dtype=T.bool)
+        # print(f"mask: {mask}")
+        # print(f"count nonzero max: {np.max(np.count_nonzero(mask.cpu().numpy(), axis=1))}")
+        # print(f"count nonzero min: {np.min(np.count_nonzero(mask.cpu().numpy(), axis=1))}")
 
         # Generate the data and move to numpy
         gen_nodes = to_np(

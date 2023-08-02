@@ -24,7 +24,7 @@ sampler_steps:
   # - 200
   # - 200
   # - 50
-  - 100
+  - 200
 
 sampler_name:
   - em
@@ -35,5 +35,7 @@ sampler_name:
 
 load: last
 
-project_name: epic_debug
-network_name: 2023-07-18_18-10-03-392032
+#project_name: epic_debug
+#network_name: 2023-07-18_18-10-03-392032
+project_name: pc_jedi
+network_name: 2023-07-21_00-13-42-092646

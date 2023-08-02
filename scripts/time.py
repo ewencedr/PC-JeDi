@@ -28,7 +28,7 @@ def main(cfg: DictConfig) -> None:
     n_particles = []
     samples = []
     batch_sizes = []
-    num_runs = 10
+    num_runs = 1
     for num_part in [10, 30, 60, 100, 150]:  # [10, 30, 60, 100, 150]:
         torch.set_float32_matmul_precision("medium")
         log.info("Loading run information")
@@ -94,7 +94,8 @@ def main(cfg: DictConfig) -> None:
                 log.info(f"Steps: {steps}")
                 log.info("Running the prediction loop")
                 times_temp = []
-                bs = {"10": 270000, "30": 270000, "60": 140000, "100": 80000, "150": 50000}
+                # bs = {"10": 270000, "30": 270000, "60": 140000, "100": 80000, "150": 50000}
+                bs = {"10": 270000, "30": 130000, "60": 50000, "100": 30000, "150": 16000}
                 datamodule.batch_size = bs[f"{num_part}"]
                 for run in range(num_runs):
                     log.info(f"RUN ---- {run} ----")
@@ -144,6 +145,8 @@ def main(cfg: DictConfig) -> None:
         }
         df = pd.DataFrame(data=dic)
         df.to_csv(Path("outputs") / "times.csv")
+
+        print(f"Successfully saved to {Path('outputs') / 'times.csv'}")
 
 
 if __name__ == "__main__":
